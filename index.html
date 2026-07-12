@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#131f24">
+  <title>АлтГТУ · Тренажёр для поступающих</title>
+  <script>
+    /* применяем тему до отрисовки, чтобы не мигало белым */
+    (function () {
+      try {
+        var p = JSON.parse(localStorage.getItem('altgtu-trainer') || '{}');
+        var t = (p.settings && p.settings.theme) || 'auto';
+        if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      } catch (e) { document.documentElement.dataset.theme = 'light'; }
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app"></div>
+  <canvas id="confetti"></canvas>
+  <div id="toasts"></div>
+  <script src="data_math.js"></script>
+  <script src="data_inf.js"></script>
+  <script src="data_rus.js"></script>
+  <script src="app.js"></script>
+  <script src="ai.js"></script>
+</body>
+</html>
