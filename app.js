@@ -200,6 +200,15 @@ function isCorrect(q, val) {
   });
 }
 
+/* На телефоне показываем цифровую клавиатуру, если ответ — точно число */
+function inputModeFor(q) {
+  if (q.type !== 'input') return '';
+  const all = [].concat(q.correct).map(String);
+  if (all.every(a => /^\d+$/.test(a))) return ' inputmode="numeric"';
+  if (all.every(a => /^[\d.,]+$/.test(a))) return ' inputmode="decimal"';
+  return '';
+}
+
 function unitLevel(subj, unitId) { return (P.levels[subj] || {})[unitId] || 0; }
 function setUnitLevel(subj, unitId, lv) {
   if (!P.levels[subj]) P.levels[subj] = {};
@@ -305,6 +314,7 @@ function topbar(title, backFn, extra) {
       <span class="stat fire" title="Стрик">🔥 ${displayStreak()}</span>
       <span class="stat xp" title="Опыт">⚡ ${P.xp}</span>
       <button class="iconbtn" id="themeBtn" title="Тема">${document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙'}</button>
+      <button class="iconbtn" id="glossBtn" title="Справочник терминов">📖</button>
       <button class="iconbtn" id="statsBtn" title="Статистика">📊</button>
       <button class="iconbtn" id="setBtn" title="Настройки">⚙️</button>`}
   </div>`;
@@ -314,6 +324,102 @@ function bindTopbar(backFn) {
   const t = document.getElementById('themeBtn'); if (t) t.onclick = () => { toggleTheme(); rerenderTop(); };
   const s = document.getElementById('statsBtn'); if (s) s.onclick = showStats;
   const g = document.getElementById('setBtn'); if (g) g.onclick = showSettings;
+  const gl = document.getElementById('glossBtn'); if (gl) gl.onclick = () => showGlossary();
+}
+
+/* ---------- Справочник терминов ---------- */
+/* Подсветка терминов в тексте: обходим текстовые узлы и оборачиваем
+   первое вхождение каждого термина в кликабельный span */
+function linkTerms(root) {
+  if (typeof GLOSS === 'undefined') return;
+  const found = {};
+  const walk = (node) => {
+    if (node.nodeType === 3) {
+      for (const key of Object.keys(GLOSS)) {
+        if (found[key]) continue;
+        const m = GLOSS_RE[key].exec(node.nodeValue);
+        if (!m) continue;
+        /* проверяем, что слева не буква (граница слова для кириллицы) */
+        const before = m.index > 0 ? node.nodeValue[m.index - 1] : ' ';
+        if (/[а-яёА-ЯЁa-zA-Z]/.test(before)) continue;
+        found[key] = true;
+        const rest = node.splitText(m.index);
+        rest.splitText(m[1].length);
+        const span = document.createElement('span');
+        span.className = 'term';
+        span.textContent = rest.nodeValue;
+        span.onclick = (e) => { e.stopPropagation(); showTermModal(key); };
+        rest.parentNode.replaceChild(span, rest);
+        return; /* в этом узле — не больше одного термина, идём дальше по DOM */
+      }
+    } else if (node.nodeType === 1 && !node.classList.contains('term')) {
+      [...node.childNodes].forEach(walk);
+    }
+  };
+  walk(root);
+}
+
+function showTermModal(key) {
+  const g = GLOSS[key];
+  if (!g) return;
+  const old = document.querySelector('.modal-bg');
+  if (old) old.remove();
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal">
+    <h3>📖 ${g.t}</h3>
+    <p class="term-def">${g.d}</p>
+    ${g.ex ? `<div class="term-ex">${esc(g.ex)}</div>` : ''}
+    <div id="wikiOut" class="term-wiki"></div>
+    <div class="btns">
+      ${g.wiki ? `<button class="btn blue" id="wikiBtn">🌐 Загрузить из Википедии</button>` : ''}
+      <button class="btn white" id="closeM">Закрыть</button>
+    </div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+  bg.querySelector('#closeM').onclick = () => bg.remove();
+  const wb = bg.querySelector('#wikiBtn');
+  if (wb) wb.onclick = async () => {
+    const out = bg.querySelector('#wikiOut');
+    out.textContent = 'Загружаю…';
+    try {
+      const res = await fetch('https://ru.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(g.wiki));
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      out.innerHTML = `<p>${esc(data.extract || 'Статья не найдена.')}</p>
+        <a href="https://ru.wikipedia.org/wiki/${encodeURIComponent(g.wiki)}" target="_blank" rel="noopener">Открыть статью полностью →</a>`;
+      wb.remove();
+    } catch (e) {
+      out.textContent = 'Не получилось загрузить — нужен интернет. Попробуй позже.';
+    }
+  };
+}
+
+function showGlossary(filter) {
+  KEYH = null;
+  const CATS = { rus: '📖 Русский язык', math: '📐 Математика', inf: '💻 Информатика' };
+  const q = (filter || '').toLowerCase();
+  const keys = Object.keys(GLOSS).filter(k =>
+    !q || k.includes(q) || GLOSS[k].t.toLowerCase().includes(q) || GLOSS[k].d.toLowerCase().includes(q));
+  const groups = Object.keys(CATS).map(cat => {
+    const items = keys.filter(k => GLOSS[k].cat === cat);
+    if (!items.length) return '';
+    return `<h3 class="section-title">${CATS[cat]}</h3>` + items.map(k =>
+      `<div class="gloss-item" data-k="${k}"><b>${GLOSS[k].t}</b><span>${GLOSS[k].d.slice(0, 80)}…</span></div>`).join('');
+  }).join('');
+  app.innerHTML = `${topbar('📖 Справочник', true, '')}
+    <div class="gloss-search"><input class="set-input" id="glossQ" placeholder="🔍 Найти термин…" value="${esc(filter || '')}"></div>
+    <div class="gloss-list">${groups || '<div class="empty"><div class="big">🤷</div><p>Ничего не нашлось</p></div>'}</div>`;
+  bindTopbar(showHome);
+  const inp = document.getElementById('glossQ');
+  inp.oninput = () => {
+    const v = inp.value;
+    /* перерисовываем только список, чтобы не терять фокус */
+    clearTimeout(inp._t);
+    inp._t = setTimeout(() => { showGlossary(v); document.getElementById('glossQ').focus(); }, 250);
+  };
+  app.querySelectorAll('.gloss-item').forEach(el => el.onclick = () => showTermModal(el.dataset.k));
 }
 let rerenderTop = () => showHome();
 
@@ -357,15 +463,27 @@ function showHome() {
     </div>`;
   }).join('');
 
+  const fresh = P.stats.answers === 0;
+  const onboarding = fresh ? `
+    <div class="plan onboard">
+      <div class="plan-head"><h3>👋 С чего начать</h3></div>
+      <div class="plan-item">1️⃣ Выбери предмет и пройди первый урок — сначала теория, потом практика</div>
+      <div class="plan-item">2️⃣ Возвращайся каждый день: ошибки будут повторяться сами, по науке</div>
+      <div class="plan-item">3️⃣ Раз в неделю сдавай пробный экзамен — привыкай к формату</div>
+      <div class="plan-tip">📖 Непонятное слово в теории? Подчёркнутые термины кликабельны, а весь словарик — за кнопкой 📖 сверху.</div>
+    </div>` : '';
+
   app.innerHTML = `
-    ${topbar('АлтГТУ Тренажёр')}
+    ${topbar('Абитура')}
     <div class="hero">
       <div class="logo">🎓</div>
-      <h1>Подготовка к вступительным АлтГТУ</h1>
-      <p class="sub">Учись каждый день — и проходной балл твой</p>
+      <h1>Абитура</h1>
+      <p class="sub">Подготовка к вступительным АлтГТУ · учись каждый день — и проходной балл твой</p>
       ${countdown}
+      <button class="btn cta" id="ctaBtn">${fresh ? '▶ НАЧАТЬ УЧИТЬСЯ' : '▶ ПРОДОЛЖИТЬ'}</button>
     </div>
-    <div class="daily ${dx >= goal ? 'done' : ''}">
+    ${onboarding}
+    <div class="daily ${dx >= goal ? 'done' : ''}" ${fresh ? 'style="display:none"' : ''}>
       <div class="ring">
         <svg width="58" height="58">
           <circle cx="29" cy="29" r="${R}" fill="none" stroke="var(--gray)" stroke-width="7"/>
@@ -379,7 +497,7 @@ function showHome() {
         <div class="sub">${dx} / ${goal} XP ${dx >= goal ? '· выполнена! 🎉' : '· вперёд!'}</div>
       </div>
     </div>
-    ${planCard()}
+    ${fresh ? '' : planCard()}
     <div class="cards">${cards}</div>
     <div class="toolgrid">
       <button class="btn orange span2" data-act="blitz">⚡ Блиц: 60 секунд</button>
@@ -395,6 +513,36 @@ function showHome() {
   app.querySelector('[data-act="examselect"]').onclick = showExamSelect;
   app.querySelector('[data-act="ai"]').onclick = () => showAI();
   app.querySelector('[data-act="blitz"]').onclick = showBlitz;
+  document.getElementById('ctaBtn').onclick = smartContinue;
+}
+
+/* Кнопка «Продолжить»: сама решает, что сейчас полезнее всего */
+function smartContinue() {
+  /* 1. есть ошибки к повторению — повторяем (интервалы важнее всего) */
+  if (dueMistakes().length) { showMistakes(); return; }
+  /* 2. иначе — следующий незавершённый урок в наименее прокачанном предмете */
+  let best = null;
+  Object.keys(COURSES).forEach(s => {
+    const c = COURSES[s];
+    for (let i = 0; i < c.units.length; i++) {
+      if (!unitUnlocked(s, i)) break;
+      const lv = unitLevel(s, c.units[i].id);
+      if (lv < MAX_LEVEL) {
+        const pr = courseProgress(s);
+        const score = pr.done / pr.total;
+        if (!best || score < best.score) best = { subj: s, idx: i, score };
+        break;
+      }
+    }
+  });
+  if (best) {
+    const u = COURSES[best.subj].units[best.idx];
+    if (!P.seenTheory[best.subj + ':' + u.id]) showTheory(best.subj, best.idx, true);
+    else startLesson(best.subj, best.idx);
+    return;
+  }
+  /* 3. всё пройдено — блиц для беглости */
+  showBlitz();
 }
 
 /* План на сегодня: урок (новое) + повторение (интервалы) + блиц (беглость) */
@@ -474,6 +622,7 @@ function showTheory(subj, unitIdx, thenLesson) {
       <button class="btn wide" data-act="go">${thenLesson ? 'НАЧАТЬ УРОК' : 'К ПРАКТИКЕ'}</button>
     </div>`;
   bindTopbar(() => showCourse(subj));
+  app.querySelectorAll('.theory-card').forEach(c => linkTerms(c));
   app.querySelector('[data-act="go"]').onclick = () => {
     P.seenTheory[subj + ':' + u.id] = true;
     saveP();
@@ -611,7 +760,7 @@ function renderQuiz() {
         </select>
       </div>`).join('')}</div>`;
   } else {
-    body = `<input class="answer-input" id="ans" autocomplete="off" placeholder="Введите ответ...">`;
+    body = `<input class="answer-input" id="ans" autocomplete="off"${inputModeFor(q)} placeholder="Введите ответ...">`;
   }
   app.innerHTML = `
     <div class="quiz-head">
@@ -923,7 +1072,7 @@ function nextBlitzQ() {
     body = `<div class="options">${q.options.map((o, i) =>
       `<button class="option" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
   } else {
-    body = `<input class="answer-input" id="bans" autocomplete="off" placeholder="Ответ + Enter">`;
+    body = `<input class="answer-input" id="bans" autocomplete="off"${inputModeFor(q)} placeholder="Ответ + Enter">`;
   }
   app.innerHTML = `
     <div class="quiz-head">
@@ -1086,7 +1235,7 @@ function renderExam() {
     body = `<div class="options">${q.options.map((o, i) =>
       `<button class="option ${EX.answers[EX.pos] === i ? 'sel' : ''}" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
   } else {
-    body = `<input class="answer-input" id="exans" autocomplete="off" placeholder="Ваш ответ..." value="${esc(EX.answers[EX.pos] || '')}">`;
+    body = `<input class="answer-input" id="exans" autocomplete="off"${inputModeFor(q)} placeholder="Ваш ответ..." value="${esc(EX.answers[EX.pos] || '')}">`;
   }
   app.innerHTML = `
     <div class="topbar">

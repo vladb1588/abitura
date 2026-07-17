@@ -403,6 +403,37 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 #blitzbody.flash-ok{ background:var(--green-bg); }
 #blitzbody.flash-bad{ background:var(--red-bg); }
 
+/* ---------- Справочник терминов ---------- */
+.term{
+  border-bottom:2px dotted var(--blue); cursor:pointer; color:var(--blue);
+  transition:background .12s;
+}
+.term:hover{ background:var(--blue-bg); }
+.term-def{ font-size:16px; margin:8px 0; }
+.term-ex{
+  background:var(--bg2); border-left:4px solid var(--blue); border-radius:0 10px 10px 0;
+  padding:8px 12px; font-size:14px; color:var(--sub); margin:8px 0;
+}
+.term-wiki{ font-size:14px; color:var(--sub); margin-top:8px; }
+.term-wiki a{ color:var(--blue); font-weight:700; }
+.gloss-search{ padding:14px 18px 4px; }
+.gloss-list{ padding:0 18px 30px; }
+.gloss-item{
+  border:2px solid var(--line); border-radius:14px; padding:12px 16px; margin-bottom:10px;
+  background:var(--card); cursor:pointer; transition:border-color .12s, background .12s;
+}
+.gloss-item:hover{ background:var(--bg2); border-color:var(--blue); }
+.gloss-item b{ color:var(--head); display:block; font-size:16px; }
+.gloss-item span{ font-size:13px; color:var(--sub); }
+
+/* ---------- Кнопка «Продолжить» и онбординг ---------- */
+.btn.cta{
+  margin-top:16px; font-size:18px; padding:15px 44px; border-radius:16px;
+  animation:glowPulse 2.2s ease infinite;
+}
+.plan.onboard{ border-color:var(--blue); }
+.plan.onboard .plan-item{ text-decoration:none; color:var(--text); }
+
 /* ---------- Коробки интервальных повторений ---------- */
 .srs-boxes{ display:flex; gap:8px; margin:12px 0; }
 .srs-box{
