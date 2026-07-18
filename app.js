@@ -1,4 +1,4 @@
-/* ===== АлтГТУ Тренажёр — движок ===== */
+/* ===== Абитура — движок ===== */
 
 const COURSES = { math: MATH_COURSE, inf: INF_COURSE, rus: RUS_COURSE };
 const GENS = Object.assign({}, MATH_GENS, INF_GENS, RUS_GENS);
@@ -329,13 +329,16 @@ function bindTopbar(backFn) {
 
 /* ---------- Справочник терминов ---------- */
 /* Подсветка терминов в тексте: обходим текстовые узлы и оборачиваем
-   первое вхождение каждого термина в кликабельный span */
-function linkTerms(root) {
+   первое вхождение каждого термина в кликабельный span.
+   cat ограничивает словарь предметом: в математике не подсвечиваем
+   русскую «приставку» (кило-/мега- — это не морфема!) и наоборот. */
+function linkTerms(root, cat) {
   if (typeof GLOSS === 'undefined') return;
+  const keys = Object.keys(GLOSS).filter(k => !cat || GLOSS[k].cat === cat);
   const found = {};
   const walk = (node) => {
     if (node.nodeType === 3) {
-      for (const key of Object.keys(GLOSS)) {
+      for (const key of keys) {
         if (found[key]) continue;
         const m = GLOSS_RE[key].exec(node.nodeValue);
         if (!m) continue;
@@ -394,6 +397,27 @@ function showTermModal(key) {
       out.textContent = 'Не получилось загрузить — нужен интернет. Попробуй позже.';
     }
   };
+}
+
+/* Теория темы поверх урока — можно подсмотреть, не теряя прогресс захода */
+function showTheoryModal(subj, unitId) {
+  const u = COURSES[subj].units.find(x => x.id === unitId);
+  if (!u) return;
+  const old = document.querySelector('.modal-bg');
+  if (old) old.remove();
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal theory-modal">
+    <h3>${u.icon} ${u.title} — теория</h3>
+    <div class="theory-modal-cards">
+      ${u.theory.map(t => `<div class="theory-card"><h3>${t.title}</h3>${t.html}</div>`).join('')}
+    </div>
+    <div class="btns"><button class="btn white" id="closeTh">ВЕРНУТЬСЯ К ЗАДАНИЮ</button></div>
+  </div>`;
+  document.body.appendChild(bg);
+  bg.querySelectorAll('.theory-card').forEach(c => linkTerms(c));
+  bg.onclick = (e) => { if (e.target === bg) bg.remove(); };
+  bg.querySelector('#closeTh').onclick = () => bg.remove();
 }
 
 function showGlossary(filter) {
@@ -478,7 +502,7 @@ function showHome() {
     <div class="hero">
       <div class="logo">🎓</div>
       <h1>Абитура</h1>
-      <p class="sub">Подготовка к вступительным АлтГТУ · учись каждый день — и проходной балл твой</p>
+      <p class="sub">Внутренние вступительные в любой вуз · темы = программа ЕГЭ · учись каждый день</p>
       ${countdown}
       <button class="btn cta" id="ctaBtn">${fresh ? '▶ НАЧАТЬ УЧИТЬСЯ' : '▶ ПРОДОЛЖИТЬ'}</button>
     </div>
@@ -622,7 +646,7 @@ function showTheory(subj, unitIdx, thenLesson) {
       <button class="btn wide" data-act="go">${thenLesson ? 'НАЧАТЬ УРОК' : 'К ПРАКТИКЕ'}</button>
     </div>`;
   bindTopbar(() => showCourse(subj));
-  app.querySelectorAll('.theory-card').forEach(c => linkTerms(c));
+  app.querySelectorAll('.theory-card').forEach(card => linkTerms(card, subj));
   app.querySelector('[data-act="go"]').onclick = () => {
     P.seenTheory[subj + ':' + u.id] = true;
     saveP();
@@ -762,6 +786,11 @@ function renderQuiz() {
   } else {
     body = `<input class="answer-input" id="ans" autocomplete="off"${inputModeFor(q)} placeholder="Введите ответ...">`;
   }
+  /* из какой темы задание — чтобы показать кнопку «Теория» */
+  const thSubj = S.mode === 'lesson' ? S.subj : q._subj;
+  const thUnit = S.mode === 'lesson' ? COURSES[S.subj].units[S.unitIdx].id : q._unit;
+  const hasTheory = thSubj && thUnit && COURSES[thSubj] && COURSES[thSubj].units.some(u => u.id === thUnit);
+
   app.innerHTML = `
     <div class="quiz-head">
       <button class="quit">✕</button>
@@ -769,15 +798,26 @@ function renderQuiz() {
       <span class="stat xp">⚡ ${S.earned}</span>
     </div>
     <div class="quiz-body anim-in">
-      <div class="qtype">${q._retry ? '🔁 Повтор' : (q.hard ? '🏆 Повышенная сложность' : MODE_LABEL[S.mode] || 'Задание')}</div>
+      <div class="qtype-row">
+        <div class="qtype">${q._retry ? '🔁 Повтор' : (q.hard ? '🏆 Повышенная сложность' : MODE_LABEL[S.mode] || 'Задание')}</div>
+        ${hasTheory ? `<button class="minibtn" id="quizTheory">📘 Теория</button>` : ''}
+      </div>
       <div class="qtext">${q.text}</div>
       ${body}
     </div>
     <div class="quiz-footer">
-      <button class="btn wide" id="checkBtn" disabled>ПРОВЕРИТЬ</button>
+      <div class="quiz-btns">
+        <button class="btn white" id="skipQBtn">ПРОПУСТИТЬ</button>
+        <button class="btn" id="checkBtn" disabled>ПРОВЕРИТЬ</button>
+      </div>
     </div>`;
 
+  if (hasTheory) document.getElementById('quizTheory').onclick = () => showTheoryModal(thSubj, thUnit);
   const checkBtn = document.getElementById('checkBtn');
+  document.getElementById('skipQBtn').onclick = () => {
+    const skipVal = q.type === 'mc' ? -1 : (q.type === 'multi' || q.type === 'match') ? [] : '';
+    submitAnswer(q, skipVal, true);
+  };
   let selected = null;
 
   app.querySelector('.quit').onclick = () => {
@@ -842,7 +882,7 @@ function renderQuiz() {
   };
 }
 
-function submitAnswer(q, val) {
+function submitAnswer(q, val, skipped) {
   const ok = isCorrect(q, val);
   S.answered++;
   P.stats.answers++;
@@ -905,7 +945,7 @@ function submitAnswer(q, val) {
     <div class="feedback ${ok ? 'okc' : 'badc'}">
       <div class="fico">${ok ? '✅' : '❌'}</div>
       <div>
-        <h3>${ok ? pick(['Отлично!', 'Верно!', 'Так держать!', 'Именно так!', 'Красота!']) : 'Неверно'}</h3>
+        <h3>${ok ? pick(['Отлично!', 'Верно!', 'Так держать!', 'Именно так!', 'Красота!']) : (skipped ? 'Пропущено' : 'Неверно')}</h3>
         ${!ok ? `<div class="expl"><b>Правильный ответ: ${esc(correctText)}</b></div>` : ''}
         ${q.expl ? `<div class="expl">${q.expl}</div>` : ''}
         ${!ok ? `<div class="expl">Задание вернётся в конце 🔁</div>` : ''}
@@ -1178,11 +1218,11 @@ function showExamSelect() {
     <div class="theory">
       <div class="theory-card">
         <h3>⏱️ Как это работает</h3>
-        <p>Полная имитация вступительного испытания АлтГТУ: реальные задания демоварианта, таймер, шкала 100 баллов.</p>
+        <p>Полная имитация внутреннего вступительного испытания: реальные задания вузовских демовариантов, таймер, шкала 100 баллов. Формат у вузов похожий — потренировавшись здесь, не растеряешься нигде.</p>
         <ul>
-          <li>Математика: 20 заданий, 180 минут, проходной — 40 баллов;</li>
-          <li>Информатика: 20 ключевых заданий, 180 минут, проходной — 46 баллов;</li>
-          <li>Русский язык: 20 ключевых заданий, 100 минут, проходной — 40 баллов.</li>
+          <li>Математика: 20 заданий, 180 минут, типичный проходной — 40 баллов;</li>
+          <li>Информатика: 20 заданий, 180 минут, типичный проходной — 46 баллов;</li>
+          <li>Русский язык: 20 заданий, 100 минут, типичный проходной — 40 баллов.</li>
         </ul>
         <p>Можно свободно переходить между заданиями и менять ответы до завершения.</p>
       </div>
