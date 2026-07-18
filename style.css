@@ -1,4 +1,4 @@
-/* ===== АлтГТУ Тренажёр — стиль в духе Duolingo, светлая + тёмная темы ===== */
+/* ===== Абитура — стиль в духе Duolingo, светлая + тёмная темы ===== */
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 :root{
@@ -425,6 +425,16 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 .gloss-item:hover{ background:var(--bg2); border-color:var(--blue); }
 .gloss-item b{ color:var(--head); display:block; font-size:16px; }
 .gloss-item span{ font-size:13px; color:var(--sub); }
+
+/* ---------- Кнопки в квизе: теория и пропуск ---------- */
+.qtype-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.qtype-row .qtype{ margin-bottom:0; }
+.quiz-btns{ display:flex; gap:10px; }
+.quiz-btns .btn{ flex:1; }
+.quiz-btns #skipQBtn{ flex:0 0 auto; }
+.theory-modal{ max-height:82vh; overflow-y:auto; max-width:560px; }
+.theory-modal-cards{ margin-top:10px; }
+.theory-modal .theory-card{ animation:none; padding:14px 16px; margin-bottom:12px; }
 
 /* ---------- Кнопка «Продолжить» и онбординг ---------- */
 .btn.cta{
