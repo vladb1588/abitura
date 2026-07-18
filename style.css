@@ -33,20 +33,33 @@
 :root[data-theme="dark"][data-palette="ocean"]{ --green-bg:#083344; }
 :root[data-theme="dark"][data-palette="sunset"]{ --green-bg:#431407; }
 :root[data-theme="dark"][data-palette="grape"]{ --green-bg:#3b0764; }
-/* Графит — монохромная палитра: обесцвечивает все акценты интерфейса */
+/* Графит — чистая чёрно-белая палитра (нейтральные серые, R=G=B) */
 :root[data-palette="mono"]{
-  --green:#4b5159; --green-sh:#343941; --green-bg:#e6e8eb;
-  --blue:#6b7280; --blue-sh:#4b5563; --blue-bg:#eceef1;
-  --purple:#6b7280; --purple-sh:#4b5563; --purple-bg:#eceef1;
-  --orange:#5b616a; --orange-sh:#3f444b; --yellow:#7b818b; --yellow-sh:#5b616a;
-  --amber-bg:#e6e8eb; --amber-fg:#5b616a;
+  --green:#333333; --green-sh:#1a1a1a; --green-bg:#e8e8e8;
+  --blue:#4d4d4d; --blue-sh:#333333; --blue-bg:#ededed;
+  --purple:#4d4d4d; --purple-sh:#333333; --purple-bg:#ededed;
+  --orange:#404040; --orange-sh:#262626; --yellow:#595959; --yellow-sh:#404040;
+  --amber-bg:#e8e8e8; --amber-fg:#404040;
+  --red:#2b2b2b; --red-sh:#141414; --red-bg:#e4e4e4;
+  /* нейтральные поверхности и текст — без синевы */
+  --bg:#f2f2f2; --bg2:#e9e9e9; --card:#ffffff;
+  --line:#e2e2e2; --line-sh:#cfcfcf;
+  --text:#333333; --head:#111111; --sub:#767676;
+  --gray:#e2e2e2; --gray-sh:#cfcfcf; --gray-txt:#9c9c9c;
+  --input-bg:#ffffff; --shadow:rgba(0,0,0,.12);
 }
 :root[data-theme="dark"][data-palette="mono"]{
-  --green:#5f6673; --green-sh:#464c57; --green-bg:#2a2f38;
-  --blue:#8b93a1; --blue-sh:#5f6673; --blue-bg:#252a32;
-  --purple:#8b93a1; --purple-sh:#5f6673; --purple-bg:#252a32;
-  --orange:#9aa1ad; --orange-sh:#5f6673; --yellow:#9aa1ad; --yellow-sh:#7b818b;
-  --amber-bg:#2a2f38; --amber-fg:#9aa1ad;
+  --green:#5a5a5a; --green-sh:#3d3d3d; --green-bg:#2b2b2b;
+  --blue:#8f8f8f; --blue-sh:#5a5a5a; --blue-bg:#262626;
+  --purple:#8f8f8f; --purple-sh:#5a5a5a; --purple-bg:#262626;
+  --orange:#9a9a9a; --orange-sh:#5a5a5a; --yellow:#9a9a9a; --yellow-sh:#7a7a7a;
+  --amber-bg:#2b2b2b; --amber-fg:#9a9a9a;
+  --red:#8f8f8f; --red-sh:#5a5a5a; --red-bg:#262626;
+  --bg:#141414; --bg2:#1e1e1e; --card:#1e1e1e;
+  --line:#333333; --line-sh:#292929;
+  --text:#e0e0e0; --head:#fafafa; --sub:#9a9a9a;
+  --gray:#333333; --gray-sh:#292929; --gray-txt:#6e6e6e;
+  --input-bg:#0f0f0f; --shadow:rgba(0,0,0,.6);
 }
 
 /* ---------- Фоновые темы (настройка «Фон») ---------- */
