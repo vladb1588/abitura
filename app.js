@@ -111,6 +111,38 @@ function nextDueInDays() {
   return Math.max(0, best);
 }
 
+/* ---------- Иконки (единый набор SVG, наследуют цвет через currentColor) ---------- */
+const ICON = {
+  back: '<path d="M15 18l-6-6 6-6"/>',
+  fwd: '<path d="M9 6l6 6-6 6"/>',
+  close: '<path d="M18 6 6 18M6 6l12 12"/>',
+  play: '<path d="M7 4v16l13-8z" fill="currentColor" stroke="none"/>',
+  flame: '<path fill="currentColor" stroke="none" d="M12 3c2.4 3.3 4.4 5.4 4.4 8.4A4.4 4.4 0 0 1 7.6 12c0-1.3.5-2.5 1.3-3.6.2 1.1 1 1.8 1 1.8C8.9 7 10 5 12 3z"/>',
+  bolt: '<path fill="currentColor" stroke="none" d="M13 2 4 14h6l-1 8 9-12h-6z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/>',
+  moon: '<path fill="currentColor" stroke="none" d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/>',
+  book: '<path d="M12 6c-1.6-1-4-1.5-6-1.5-1.6 0-3 .3-3 .3v13s1.2-.3 3-.3c2 0 4.4.5 6 1.5 1.6-1 4-1.5 6-1.5 1.8 0 3 .3 3 .3v-13s-1.4-.3-3-.3c-2 0-4.4.5-6 1.5z"/><path d="M12 6v13"/>',
+  chart: '<rect x="4" y="12" width="4" height="8" rx="1" fill="currentColor" stroke="none"/><rect x="10" y="6" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="16" y="9" width="4" height="11" rx="1" fill="currentColor" stroke="none"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h7M15 18h5"/><circle cx="15" cy="6" r="2" fill="currentColor"/><circle cx="9" cy="12" r="2" fill="currentColor"/><circle cx="13" cy="18" r="2" fill="currentColor"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9.5 2h5M18.5 5.5 20 4"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-2.6-6.3L21 8"/><path d="M21 3v5h-5"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  spark: '<path fill="currentColor" stroke="none" d="M12 3l1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4z"/><path fill="currentColor" stroke="none" d="M18.5 13l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>',
+  check: '<path d="M5 12l5 5L20 7"/>',
+  circle: '<circle cx="12" cy="12" r="8"/>',
+  bulb: '<path d="M9.5 18h5M10.5 21h3"/><path d="M12 3a6 6 0 0 0-3.8 10.6c.6.5 1.3 1.2 1.3 2.4h5c0-1.2.7-1.9 1.3-2.4A6 6 0 0 0 12 3z"/>',
+  snow: '<path d="M12 2v20M4.2 7l15.6 10M19.8 7 4.2 17"/><path d="M12 6l-2-2M12 6l2-2M12 18l-2 2M12 18l2 2"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  crown: '<path fill="currentColor" stroke="none" d="M3 8l4 3.5L12 4l5 7.5L21 8l-1.6 11H4.6z"/>',
+  star: '<path fill="currentColor" stroke="none" d="M12 3.5l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 21.4l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v4M16 3v4"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  cap: '<path fill="currentColor" stroke="none" d="M12 3 1 8l11 4.6L21 8.8V15h2V8z"/><path d="M5 11v4.2c0 1.6 3.1 3.3 7 3.3s7-1.7 7-3.3V11" fill="none"/>',
+  note: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>'
+};
+function ic(name, cls) { return `<svg class="ic ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${ICON[name] || ''}</svg>`; }
+const SUBJ_MONO = { math: 'ƒ', inf: '{}', rus: 'Аб', eng: 'Aa' };
+
 /* XP с учётом дневной цели и истории */
 function touchDaily() {
   const t = todayStr();
@@ -308,17 +340,25 @@ let KEYH = null;
 document.addEventListener('keydown', e => { if (KEYH) KEYH(e); });
 
 /* ---------- Шапка ---------- */
+function statPill() {
+  return `<div class="statpill">
+    <span class="stat fire" title="Стрик">${ic('flame')}${displayStreak()}</span>
+    <span class="stat xp" title="Опыт">${ic('bolt')}${P.xp}</span>
+  </div>`;
+}
 function topbar(title, backFn, extra) {
+  let right;
+  if (extra !== undefined) right = extra;
+  else if (backFn) right = statPill();
+  else right = statPill() + `
+    <button class="iconbtn" id="themeBtn" title="Тема">${ic(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon')}</button>
+    <button class="iconbtn" id="glossBtn" title="Справочник терминов">${ic('book')}</button>
+    <button class="iconbtn" id="statsBtn" title="Статистика">${ic('chart')}</button>
+    <button class="iconbtn" id="setBtn" title="Настройки">${ic('sliders')}</button>`;
   return `<div class="topbar">
-    ${backFn ? `<button class="back">←</button>` : ''}
+    ${backFn ? `<button class="back iconbtn">${ic('back')}</button>` : ''}
     <div class="title">${title}</div>
-    ${extra !== undefined ? extra : `
-      <span class="stat fire" title="Стрик">🔥 ${displayStreak()}</span>
-      <span class="stat xp" title="Опыт">⚡ ${P.xp}</span>
-      <button class="iconbtn" id="themeBtn" title="Тема">${document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙'}</button>
-      <button class="iconbtn" id="glossBtn" title="Справочник терминов">📖</button>
-      <button class="iconbtn" id="statsBtn" title="Статистика">📊</button>
-      <button class="iconbtn" id="setBtn" title="Настройки">⚙️</button>`}
+    ${right}
   </div>`;
 }
 function bindTopbar(backFn) {
@@ -372,7 +412,7 @@ function showTermModal(key) {
   const bg = document.createElement('div');
   bg.className = 'modal-bg';
   bg.innerHTML = `<div class="modal">
-    <h3>📖 ${g.t}</h3>
+    <h3>${g.t}</h3>
     <p class="term-def">${g.d}</p>
     ${g.ex ? `<div class="term-ex">${esc(g.ex)}</div>` : ''}
     <div id="wikiOut" class="term-wiki"></div>
@@ -424,7 +464,7 @@ function showTheoryModal(subj, unitId) {
 
 function showGlossary(filter) {
   KEYH = null;
-  const CATS = { rus: '📖 Русский язык', math: '📐 Математика', inf: '💻 Информатика' };
+  const CATS = { rus: 'Русский язык', math: 'Математика', inf: 'Информатика' };
   const q = (filter || '').toLowerCase();
   const keys = Object.keys(GLOSS).filter(k =>
     !q || k.includes(q) || GLOSS[k].t.toLowerCase().includes(q) || GLOSS[k].d.toLowerCase().includes(q));
@@ -434,7 +474,7 @@ function showGlossary(filter) {
     return `<h3 class="section-title">${CATS[cat]}</h3>` + items.map(k =>
       `<div class="gloss-item" data-k="${k}"><b>${GLOSS[k].t}</b><span>${GLOSS[k].d.slice(0, 80)}…</span></div>`).join('');
   }).join('');
-  app.innerHTML = `${topbar('📖 Справочник', true, '')}
+  app.innerHTML = `${topbar('Справочник', true, '')}
     <div class="gloss-search"><input class="set-input" id="glossQ" placeholder="🔍 Найти термин…" value="${esc(filter || '')}"></div>
     <div class="gloss-list">${groups || '<div class="empty"><div class="big">🤷</div><p>Ничего не нашлось</p></div>'}</div>`;
   bindTopbar(showHome);
@@ -471,68 +511,85 @@ function showHome() {
   let countdown = '';
   if (P.settings.examDate) {
     const days = Math.ceil((new Date(P.settings.examDate) - new Date(todayStr())) / 86400000);
-    if (days >= 0) countdown = `<div class="countdown">📅 До экзамена: ${days} дн.</div>`;
+    if (days >= 0) countdown = `<div class="countdown">${ic('calendar')} До экзамена: ${days} дн.</div>`;
   }
 
   const cards = Object.keys(COURSES).map(s => {
     const c = COURSES[s];
     const pr = courseProgress(s);
     const best = P.examBest[s];
-    return `<div class="subject-card" data-subj="${s}">
-      <div class="icon">${c.icon}</div>
+    return `<button class="subject-card" data-subj="${s}">
+      <div class="subj-mono subj-${s}">${SUBJ_MONO[s] || ic('book')}</div>
       <div class="info">
         <h3>${c.title}</h3>
-        <div class="meta">Пройдено тем: ${pr.done} из ${pr.total}${best !== undefined ? ` · Лучший балл: ${best}/100` : ''}</div>
+        <div class="meta">Тем пройдено: ${pr.done} из ${pr.total}${best !== undefined ? ` · рекорд ${best}/100` : ''}</div>
         <div class="progressbar"><div style="width:${Math.round(pr.done / pr.total * 100)}%"></div></div>
       </div>
-      <div class="arrow">›</div>
-    </div>`;
+      <span class="arrow">${ic('fwd')}</span>
+    </button>`;
   }).join('');
 
   const fresh = P.stats.answers === 0;
   const onboarding = fresh ? `
     <div class="plan onboard">
-      <div class="plan-head"><h3>👋 С чего начать</h3></div>
-      <div class="plan-item">1️⃣ Выбери предмет и пройди первый урок — сначала теория, потом практика</div>
-      <div class="plan-item">2️⃣ Возвращайся каждый день: ошибки будут повторяться сами, по науке</div>
-      <div class="plan-item">3️⃣ Раз в неделю сдавай пробный экзамен — привыкай к формату</div>
-      <div class="plan-tip">📖 Непонятное слово в теории? Подчёркнутые термины кликабельны, а весь словарик — за кнопкой 📖 сверху.</div>
+      <div class="plan-head"><h3>С чего начать</h3></div>
+      <div class="onb-step"><span class="onb-n">1</span> Выбери предмет и пройди первый урок — сначала теория, потом практика</div>
+      <div class="onb-step"><span class="onb-n">2</span> Возвращайся каждый день: ошибки будут повторяться сами, по науке</div>
+      <div class="onb-step"><span class="onb-n">3</span> Раз в неделю сдавай пробный экзамен — привыкай к формату</div>
+      <div class="plan-tip">${ic('book')} Непонятное слово в теории? Подчёркнутые термины кликабельны, а весь словарь — по кнопке в шапке.</div>
     </div>` : '';
+
+  const tool = (act, icon, tint, title, sub, badge) => `
+    <button class="tool tint-${tint}" data-act="${act}">
+      <span class="tool-ic">${ic(icon)}</span>
+      <span class="tool-body"><span class="tool-t">${title}${badge || ''}</span><span class="tool-sub">${sub}</span></span>
+    </button>`;
+  const due = dueMistakes().length;
 
   app.innerHTML = `
     ${topbar('Абитура')}
     <div class="hero">
-      <div class="logo">🎓</div>
+      <div class="logo">${ic('cap')}</div>
       <h1>Абитура</h1>
-      <p class="sub">Внутренние вступительные в любой вуз · темы = программа ЕГЭ · учись каждый день</p>
+      <p class="sub">Подготовка к вступительным · темы по программе ЕГЭ</p>
       ${countdown}
-      <button class="btn cta" id="ctaBtn">${fresh ? '▶ НАЧАТЬ УЧИТЬСЯ' : '▶ ПРОДОЛЖИТЬ'}</button>
+      <button class="btn cta" id="ctaBtn">${ic('play')} ${fresh ? 'Начать учиться' : 'Продолжить'}</button>
     </div>
     ${onboarding}
     <div class="daily ${dx >= goal ? 'done' : ''}" ${fresh ? 'style="display:none"' : ''}>
       <div class="ring">
-        <svg width="58" height="58">
-          <circle cx="29" cy="29" r="${R}" fill="none" stroke="var(--gray)" stroke-width="7"/>
-          <circle cx="29" cy="29" r="${R}" fill="none" stroke="${dx >= goal ? 'var(--yellow)' : 'var(--green)'}" stroke-width="7"
+        <svg width="56" height="56">
+          <circle cx="28" cy="28" r="${R}" fill="none" stroke="var(--gray)" stroke-width="6"/>
+          <circle cx="28" cy="28" r="${R}" fill="none" stroke="${dx >= goal ? 'var(--yellow)' : 'var(--green)'}" stroke-width="6"
             stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct / 100)}"/>
         </svg>
-        <div class="pct">${dx >= goal ? '✓' : pct + '%'}</div>
+        <div class="pct">${dx >= goal ? ic('check') : pct + '%'}</div>
       </div>
       <div>
         <h3>Дневная цель</h3>
-        <div class="sub">${dx} / ${goal} XP ${dx >= goal ? '· выполнена! 🎉' : '· вперёд!'}</div>
+        <div class="sub">${dx} / ${goal} XP · ${dx >= goal ? 'выполнена' : 'вперёд!'}</div>
       </div>
     </div>
     ${fresh ? '' : planCard()}
+    <h2 class="block-title">Предметы</h2>
     <div class="cards">${cards}</div>
+    <h2 class="block-title">Тренировка</h2>
+    <button class="tool tool-hero tint-accent" data-act="blitz">
+      <span class="tool-ic">${ic('timer')}</span>
+      <span class="tool-body"><span class="tool-t">Блиц</span><span class="tool-sub">60 секунд · задания на скорость</span></span>
+      <span class="arrow">${ic('fwd')}</span>
+    </button>
     <div class="toolgrid">
-      <button class="btn orange span2" data-act="blitz">⚡ Блиц: 60 секунд</button>
-      <button class="btn blue" data-act="mistakes">🔁 Повторение${dueMistakes().length ? ` <span class="due-badge">${dueMistakes().length}</span>` : ''}</button>
-      <button class="btn" data-act="smart">🧠 Умная тренировка</button>
-      <button class="btn red" data-act="examselect">⏱️ Пробный экзамен</button>
-      <button class="btn purple" data-act="ai">🤖 ИИ-задания <span class="ai-badge">AI</span></button>
-      <button class="btn white" data-act="news">✨ Что нового${P.seenNews < NEWS_V ? ' <span class="due-badge">!</span>' : ''}</button>
-    </div>`;
+      ${tool('mistakes', 'refresh', 'blue', 'Повторение', 'ошибки по расписанию', due ? ` <span class="cnt">${due}</span>` : '')}
+      ${tool('smart', 'target', 'violet', 'Умная', 'слабые темы')}
+      ${tool('examselect', 'note', 'amber', 'Экзамен', 'пробный с таймером')}
+      ${tool('ai', 'spark', 'violet', 'ИИ-задания', 'бесконечные, от Claude')}
+    </div>
+    <button class="tool tool-slim" data-act="news">
+      <span class="tool-ic">${ic('star')}</span>
+      <span class="tool-body"><span class="tool-t">Что нового${P.seenNews < NEWS_V ? ' <span class="cnt">!</span>' : ''}</span></span>
+      <span class="arrow">${ic('fwd')}</span>
+    </button>`;
   bindTopbar();
   app.querySelectorAll('.subject-card').forEach(el => el.onclick = () => showCourse(el.dataset.subj));
   app.querySelector('[data-act="mistakes"]').onclick = () => showMistakes();
@@ -577,20 +634,20 @@ function smartContinue() {
 function planCard() {
   const due = dueMistakes().length;
   const items = [
-    { ico: '📗', label: 'Пройди один урок', done: P.daily.lessons > 0 },
-    { ico: '🔁', label: due ? `Повтори ошибки (${due})` : 'Повторение выполнено', done: due === 0 },
-    { ico: '⚡', label: 'Блиц-разминка', done: P.daily.blitz > 0 }
+    { label: 'Пройди один урок', done: P.daily.lessons > 0 },
+    { label: due ? `Повтори ошибки (${due})` : 'Повторение выполнено', done: due === 0 },
+    { label: 'Блиц-разминка', done: P.daily.blitz > 0 }
   ];
   const doneCount = items.filter(i => i.done).length;
   const tip = TIPS[new Date().getDate() % TIPS.length];
   return `<div class="plan ${doneCount === 3 ? 'alldone' : ''}">
     <div class="plan-head">
-      <h3>📋 План на сегодня</h3>
-      <span class="plan-count">${doneCount}/3${doneCount === 3 ? ' 🎉' : ''}</span>
+      <h3>План на сегодня</h3>
+      <span class="plan-count">${doneCount}/3</span>
     </div>
-    ${items.map(i => `<div class="plan-item ${i.done ? 'done' : ''}"><span class="chk">${i.done ? '✅' : '⬜'}</span> ${i.ico} ${i.label}</div>`).join('')}
-    <div class="plan-tip">💡 ${tip}</div>
-    ${P.freezes ? `<div class="plan-tip">❄️ Заморозок стрика в запасе: ${P.freezes}</div>` : ''}
+    ${items.map(i => `<div class="plan-item ${i.done ? 'done' : ''}"><span class="chk">${ic(i.done ? 'check' : 'circle')}</span> ${i.label}</div>`).join('')}
+    <div class="plan-tip">${ic('bulb')} ${tip}</div>
+    ${P.freezes ? `<div class="plan-tip">${ic('snow')} Заморозок стрика в запасе: ${P.freezes}</div>` : ''}
   </div>`;
 }
 
@@ -605,23 +662,25 @@ function showCourse(subj) {
     const unlocked = unitUnlocked(subj, i);
     let cls = !unlocked ? 'locked' : lv >= MAX_LEVEL ? 'done' : '';
     if (unlocked && lv < MAX_LEVEL && !nextFound) { cls += ' next'; nextFound = true; }
-    const stars = '★'.repeat(lv) + `<span class="off">${'★'.repeat(MAX_LEVEL - lv)}</span>`;
+    const glyph = !unlocked ? ic('lock') : lv >= MAX_LEVEL ? ic('crown') : ic('play');
+    const stars = Array.from({ length: MAX_LEVEL }, (_, k) =>
+      `<span class="dot ${k < lv ? 'on' : ''}"></span>`).join('');
     return `<div class="unit-row" style="animation-delay:${i * 0.03}s">
-      <div class="unit-node ${cls}" data-idx="${i}">${!unlocked ? '🔒' : lv >= MAX_LEVEL ? '👑' : u.icon}</div>
+      <div class="unit-node ${cls}" data-idx="${i}">${glyph}</div>
       <div class="unit-info">
         <h3>${u.title}</h3>
         <div class="unit-stars">${stars}</div>
       </div>
       <div class="unit-actions">
-        ${unlocked ? `<button class="minibtn" data-th="${i}">📘 Теория</button>` : ''}
+        ${unlocked ? `<button class="minibtn" data-th="${i}">${ic('book')} Теория</button>` : ''}
       </div>
     </div>`;
   }).join('');
   app.innerHTML = `
-    ${topbar(c.icon + ' ' + c.title, true)}
+    ${topbar(`<span class="title-mono subj-${subj}">${SUBJ_MONO[subj] || ''}</span>${c.title}`, true)}
     <div class="unit-list">${rows}</div>
     <div class="bottom-actions">
-      <button class="btn red wide" data-act="exam">⏱️ Пробный экзамен (${c.exam.length} заданий, ${c.examTime} мин)</button>
+      <button class="btn wide ghost" data-act="exam">${ic('note')} Пробный экзамен · ${c.exam.length} заданий, ${c.examTime} мин</button>
     </div>`;
   bindTopbar(showHome);
   app.querySelectorAll('.unit-node').forEach(el => {
@@ -811,22 +870,22 @@ function renderQuiz() {
 
   app.innerHTML = `
     <div class="quiz-head">
-      <button class="quit">✕</button>
+      <button class="quit iconbtn">${ic('close')}</button>
       <div class="progressbar"><div style="width:${progress}%"></div></div>
-      <span class="stat xp">⚡ ${S.earned}</span>
+      <span class="stat xp">${ic('bolt')}${S.earned}</span>
     </div>
     <div class="quiz-body anim-in">
       <div class="qtype-row">
-        <div class="qtype">${q._retry ? '🔁 Повтор' : (q.hard ? '🏆 Повышенная сложность' : MODE_LABEL[S.mode] || 'Задание')}</div>
-        ${hasTheory ? `<button class="minibtn" id="quizTheory">📘 Теория</button>` : ''}
+        <div class="qtype">${q._retry ? 'Повтор' : (q.hard ? '🏆 Повышенная сложность' : MODE_LABEL[S.mode] || 'Задание')}</div>
+        ${hasTheory ? `<button class="minibtn" id="quizTheory">${ic('book')} Теория</button>` : ''}
       </div>
       <div class="qtext">${q.text}</div>
       ${body}
     </div>
     <div class="quiz-footer">
       <div class="quiz-btns">
-        <button class="btn white" id="skipQBtn">ПРОПУСТИТЬ</button>
-        <button class="btn" id="checkBtn" disabled>ПРОВЕРИТЬ</button>
+        <button class="btn white" id="skipQBtn">Пропустить</button>
+        <button class="btn" id="checkBtn" disabled>Проверить</button>
       </div>
     </div>`;
 
@@ -967,15 +1026,15 @@ function submitAnswer(q, val, skipped) {
   footer.classList.add(ok ? 'ok' : 'bad');
   footer.innerHTML = `
     <div class="feedback ${ok ? 'okc' : 'badc'}">
-      <div class="fico">${ok ? '✅' : '❌'}</div>
+      <div class="fico">${ic(ok ? 'check' : 'close')}</div>
       <div>
         <h3>${ok ? pick(['Отлично!', 'Верно!', 'Так держать!', 'Именно так!', 'Красота!']) : (skipped ? 'Пропущено' : 'Неверно')}</h3>
         ${!ok ? `<div class="expl"><b>Правильный ответ: ${esc(correctText)}</b></div>` : ''}
         ${q.expl ? `<div class="expl">${q.expl}</div>` : ''}
-        ${!ok ? `<div class="expl">Задание вернётся в конце 🔁</div>` : ''}
+        ${!ok ? `<div class="expl">Задание вернётся в конце для повторения</div>` : ''}
       </div>
     </div>
-    <button class="btn ${ok ? '' : 'red'} wide" id="contBtn">ПРОДОЛЖИТЬ</button>`;
+    <button class="btn ${ok ? '' : 'red'} wide" id="contBtn">Продолжить</button>`;
 
   if (q.type === 'mc') {
     app.querySelectorAll('.option').forEach((el, i) => {
@@ -1079,16 +1138,16 @@ function finishQuiz() {
 const NEWS_V = 1; /* увеличивай при заметных обновлениях — на кнопке появится «!» */
 
 const FEATURES = [
-  { ico: '⚡', title: 'Блиц: 60 секунд', desc: 'Задания вперемешку из всех предметов на скорость. Серии, рекорды, бонусный XP.', act: 'blitz' },
-  { ico: '📦', title: 'Повторение по науке', desc: 'Ошибки возвращаются через 1–2–4–7–14 дней — ровно когда мозг начинает забывать (система Лейтнера).', act: 'mistakes' },
-  { ico: '🔥', title: 'Адаптивная сложность', desc: 'Точность в теме ≥80% — задания становятся сложнее, ниже 50% — проще. Само подстраивается.' },
-  { ico: '📖', title: 'Справочник терминов', desc: 'Подчёркнутые слова в теории кликабельны: определение, пример и статья из Википедии.', act: 'gloss' },
-  { ico: '📘', title: 'Теория из задания', desc: 'Забыл правило посреди урока? Кнопка «Теория» в углу задания откроет её, не сбив прогресс.' },
-  { ico: '🖌️', title: 'Палитры и фоны', desc: '4 цвета кнопок и 5 фонов — собери своё оформление, всё работает в светлой и тёмной темах.', act: 'settings' },
-  { ico: '🤖', title: 'ИИ-задания', desc: 'Claude придумывает бесконечные новые задания по любой теме — со своим API-ключом.', act: 'ai' },
-  { ico: '💾', title: 'Резервная копия', desc: 'Экспорт и импорт прогресса файлом — перенеси стрик и XP на другой компьютер или телефон.', act: 'settings' },
-  { ico: '❄️', title: 'Заморозки стрика', desc: 'Каждые 5 дней стрика — заморозка в запас (до 2). Пропустил день — стрик уцелеет.' },
-  { ico: '📋', title: 'План на сегодня', desc: 'Урок + повторение + блиц: три компонента эффективной тренировки с галочками на главной.' }
+  { ico: 'timer', title: 'Блиц: 60 секунд', desc: 'Задания вперемешку из всех предметов на скорость. Серии, рекорды, бонусный XP.', act: 'blitz' },
+  { ico: 'refresh', title: 'Повторение по науке', desc: 'Ошибки возвращаются через 1–2–4–7–14 дней — ровно когда мозг начинает забывать (система Лейтнера).', act: 'mistakes' },
+  { ico: 'target', title: 'Адаптивная сложность', desc: 'Точность в теме ≥80% — задания становятся сложнее, ниже 50% — проще. Само подстраивается.' },
+  { ico: 'book', title: 'Справочник терминов', desc: 'Подчёркнутые слова в теории кликабельны: определение, пример и статья из Википедии.', act: 'gloss' },
+  { ico: 'bulb', title: 'Теория из задания', desc: 'Забыл правило посреди урока? Кнопка «Теория» в углу задания откроет её, не сбив прогресс.' },
+  { ico: 'sliders', title: 'Палитры и фоны', desc: '4 цвета кнопок и 5 фонов — собери своё оформление, всё работает в светлой и тёмной темах.', act: 'settings' },
+  { ico: 'spark', title: 'ИИ-задания', desc: 'Claude придумывает бесконечные новые задания по любой теме — со своим API-ключом.', act: 'ai' },
+  { ico: 'note', title: 'Резервная копия', desc: 'Экспорт и импорт прогресса файлом — перенеси стрик и XP на другой компьютер или телефон.', act: 'settings' },
+  { ico: 'snow', title: 'Заморозки стрика', desc: 'Каждые 5 дней стрика — заморозка в запас (до 2). Пропустил день — стрик уцелеет.' },
+  { ico: 'check', title: 'План на сегодня', desc: 'Урок + повторение + блиц: три компонента эффективной тренировки с галочками на главной.' }
 ];
 
 const CHANGELOG = [
@@ -1104,15 +1163,15 @@ function showWhatsNew() {
   const acts = { blitz: showBlitz, mistakes: () => showMistakes(), gloss: () => showGlossary(), ai: () => showAI(), settings: showSettings };
   const feats = FEATURES.map((f, i) => `
     <div class="gloss-item feat" ${f.act ? `data-act="${f.act}"` : ''} style="animation-delay:${i * 0.03}s">
-      <b>${f.ico} ${f.title}${f.act ? ' <span class="arrow-sm">›</span>' : ''}</b>
+      <b>${ic(f.ico)} ${f.title}${f.act ? ` <span class="arrow-sm">${ic('fwd')}</span>` : ''}</b>
       <span>${f.desc}</span>
     </div>`).join('');
   const log = CHANGELOG.map(c => `
     <div class="theory-card">
-      <h3>🗓️ ${c.d}</h3>
+      <h3>${c.d}</h3>
       <ul>${c.items.map(i => `<li>${i}</li>`).join('')}</ul>
     </div>`).join('');
-  app.innerHTML = `${topbar('✨ Что нового', true, '')}
+  app.innerHTML = `${topbar('Что нового', true, '')}
     <h3 class="section-title">Возможности, о которых стоит знать</h3>
     <div class="gloss-list">${feats}</div>
     <h3 class="section-title">Журнал обновлений</h3>
@@ -1135,7 +1194,7 @@ function allGenNames() {
 
 function showBlitz() {
   KEYH = null;
-  app.innerHTML = `${topbar('⚡ Блиц', true, '')}
+  app.innerHTML = `${topbar('Блиц', true, '')}
     <div class="theory">
       <div class="theory-card">
         <h3>⚡ 60 секунд. Максимум задач.</h3>
@@ -1488,7 +1547,7 @@ function showStats() {
   ).join('');
 
   app.innerHTML = `
-    ${topbar('📊 Статистика', true, '')}
+    ${topbar('Статистика', true, '')}
     <div class="stats-grid">
       <div class="stat-card"><div class="val">⚡ ${P.xp}</div><div class="lbl">Всего опыта</div></div>
       <div class="stat-card"><div class="val">🔥 ${displayStreak()}</div><div class="lbl">Стрик (дней подряд)${P.freezes ? ' · ❄️×' + P.freezes : ''}</div></div>
@@ -1514,7 +1573,7 @@ function showSettings() {
     `<button class="${o.v === cur ? 'on' : ''}" data-v="${o.v}">${o.t}</button>`).join('')}</div>`;
 
   app.innerHTML = `
-    ${topbar('⚙️ Настройки', true, '')}
+    ${topbar('Настройки', true, '')}
     <div class="settings">
       <div class="set-row">
         <h4>🎨 Тема</h4>
