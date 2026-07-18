@@ -23,11 +23,11 @@ function defaultP() {
   return {
     xp: 0, streak: 0, lastDay: '', freezes: 0,
     levels: {}, doneStatic: {}, seenTheory: {},
-    mistakes: [], examBest: {}, weak: {},
+    mistakes: [], examBest: {}, weak: {}, unitAcc: {},
     daily: { day: '', xp: 0, lessons: 0, reviews: 0, blitz: 0 },
     ach: {},
     stats: { lessons: 0, exams: 0, answers: 0, correct: 0, perfect: 0, ai: 0, graduated: 0, blitzBest: 0, history: {} },
-    settings: { theme: 'auto', sound: true, goal: 50, examDate: '', apiKey: '', model: 'claude-opus-4-8' }
+    settings: { theme: 'auto', palette: 'classic', sound: true, goal: 50, examDate: '', apiKey: '', model: 'claude-opus-4-8' }
   };
 }
 let P = loadP();
@@ -229,6 +229,7 @@ function applyTheme() {
   let t = P.settings.theme;
   if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   document.documentElement.dataset.theme = t;
+  document.documentElement.dataset.palette = P.settings.palette || 'classic';
 }
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (P.settings.theme === 'auto') applyTheme();
@@ -638,6 +639,7 @@ function showTheory(subj, unitIdx, thenLesson) {
   KEYH = null;
   const c = COURSES[subj];
   const u = c.units[unitIdx];
+  if (thenLesson) { P.seenTheory[subj + ':' + u.id] = true; saveP(); }
   const cards = u.theory.map((t, i) => `<div class="theory-card" style="animation-delay:${i * 0.07}s"><h3>${t.title}</h3>${t.html}</div>`).join('');
   app.innerHTML = `
     ${topbar(u.icon + ' ' + u.title, true, '')}
@@ -658,17 +660,27 @@ function showTheory(subj, unitIdx, thenLesson) {
 function buildLessonQueue(subj, unitIdx) {
   const u = COURSES[subj].units[unitIdx];
   const queue = [];
-  const fresh = [];
+  let fresh = [];
   u.pool.forEach((q, qi) => {
     const key = subj + ':' + u.id + ':' + qi;
     if (!P.doneStatic[key]) fresh.push(Object.assign({ _skey: key }, q));
   });
-  queue.push(...shuffle(fresh).slice(0, LESSON_LEN));
-  const genNames = u.gens || [];
+  /* адаптивная сложность: точность в теме высокая → сложные задания в приоритете,
+     низкая → сложные в конец очереди */
+  const rec = P.unitAcc[subj + ':' + u.id];
+  const acc = rec && rec.a >= 8 ? rec.c / rec.a : null;
+  const adaptive = acc !== null && acc >= 0.8;
+  fresh = shuffle(fresh);
+  if (adaptive) fresh.sort((x, y) => (y.hard ? 1 : 0) - (x.hard ? 1 : 0));
+  else if (acc !== null && acc < 0.5) fresh.sort((x, y) => (x.hard ? 1 : 0) - (y.hard ? 1 : 0));
+  queue.push(...fresh.slice(0, LESSON_LEN));
+  /* генераторов теперь много — свежие задания в каждом уроке.
+     В урок всегда идёт минимум 3 сгенерированных, чтобы не заучивать пул наизусть */
+  const genNames = (u.gens || []).filter(g => GENS[g]);
+  if (genNames.length && queue.length > LESSON_LEN - 3) queue.length = LESSON_LEN - 3;
   let guard = 0;
   while (queue.length < LESSON_LEN && genNames.length && guard++ < 60) {
     const g = GENS[pick(genNames)];
-    if (!g) break;
     const q = g();
     if (!queue.some(x => x.text === q.text)) queue.push(q);
   }
@@ -678,7 +690,9 @@ function buildLessonQueue(subj, unitIdx) {
     if (!queue.some(x => x.text === q.text)) queue.push(Object.assign({}, q));
     if (queue.length >= u.pool.length) break;
   }
-  return shuffle(queue);
+  const out = shuffle(queue);
+  out._adaptive = adaptive;
+  return out;
 }
 
 /* Умная тренировка: ошибки к повторению + генераторы по слабым темам (интерливинг) */
@@ -713,6 +727,7 @@ function startLesson(subj, unitIdx) {
   const queue = buildLessonQueue(subj, unitIdx);
   if (!queue.length) { toast('🤷', 'Пусто', 'В этой теме пока нет заданий.'); return; }
   S = { mode: 'lesson', subj, unitIdx, queue, pos: 0, total: queue.length, origTotal: queue.length, firstTry: 0, answered: 0, earned: 0 };
+  if (queue._adaptive) toast('🔥', 'Адаптивная сложность', 'Точность в теме высокая — задания будут посложнее.');
   renderQuiz();
 }
 
@@ -886,6 +901,13 @@ function submitAnswer(q, val, skipped) {
   const ok = isCorrect(q, val);
   S.answered++;
   P.stats.answers++;
+  /* точность по теме — для адаптивной сложности */
+  const wkey = (q._subj || S.subj || '') + ':' + (q._unit || (S.mode === 'lesson' ? COURSES[S.subj].units[S.unitIdx].id : ''));
+  const validKey = wkey.indexOf(':') > 0 && !wkey.endsWith(':');
+  if (validKey && !q._retry) {
+    const r = P.unitAcc[wkey] = P.unitAcc[wkey] || { a: 0, c: 0 };
+    r.a++; if (ok) r.c++;
+  }
 
   if (ok) {
     P.stats.correct++;
@@ -915,8 +937,7 @@ function submitAnswer(q, val, skipped) {
   } else {
     playSound('wrong');
     // счётчик слабых тем
-    const wkey = (q._subj || S.subj || '') + ':' + (q._unit || (S.mode === 'lesson' ? COURSES[S.subj].units[S.unitIdx].id : ''));
-    if (wkey !== ':') P.weak[wkey] = (P.weak[wkey] || 0) + 1;
+    if (validKey) P.weak[wkey] = (P.weak[wkey] || 0) + 1;
     // вернуть в конец очереди и записать в ошибки
     const again = Object.assign({}, q, { _retry: true });
     S.queue.push(again);
@@ -1451,6 +1472,10 @@ function showSettings() {
         ${seg('theme', [{ v: 'light', t: '☀️ Светлая' }, { v: 'dark', t: '🌙 Тёмная' }, { v: 'auto', t: '🖥️ Авто' }], st.theme)}
       </div>
       <div class="set-row">
+        <h4>🖌️ Палитра</h4>
+        ${seg('palette', [{ v: 'classic', t: '🟢 Классика' }, { v: 'ocean', t: '🌊 Океан' }, { v: 'sunset', t: '🌅 Закат' }, { v: 'grape', t: '🍇 Виноград' }], st.palette || 'classic')}
+      </div>
+      <div class="set-row">
         <h4>🔊 Звуки</h4>
         ${seg('sound', [{ v: 'on', t: 'Вкл' }, { v: 'off', t: 'Выкл' }], st.sound ? 'on' : 'off')}
       </div>
@@ -1491,6 +1516,7 @@ function showSettings() {
     segEl.querySelectorAll('button').forEach(b => b.onclick = () => {
       const name = segEl.dataset.set, v = b.dataset.v;
       if (name === 'theme') { P.settings.theme = v; applyTheme(); }
+      if (name === 'palette') { P.settings.palette = v; applyTheme(); }
       if (name === 'sound') { P.settings.sound = v === 'on'; if (v === 'on') playSound('correct'); }
       if (name === 'goal') P.settings.goal = Number(v);
       if (name === 'model') P.settings.model = v;

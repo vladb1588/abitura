@@ -7,6 +7,8 @@
 function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
 function pick(arr) { return arr[rnd(0, arr.length - 1)]; }
 function fmtNum(x) { return String(Math.round(x * 100) / 100).replace('.', ','); }
+/* вертикальная дробь для текстов заданий */
+function frac(n, d) { return `<span class="frac"><span>${n}</span><span>${d}</span></span>`; }
 // знак при выводе: sgn(3) => "+ 3", sgn(-3) => "− 3"
 function sgnTerm(n) { return (n < 0 ? '− ' : '+ ') + Math.abs(n); }
 
@@ -59,7 +61,7 @@ const MATH_COURSE = {
           expl: '(1 − 0,85) · 100 = <b>15%</b>.' },
         { text: 'Бегун пробежал 600 метров за 1,5 минуты. Найдите среднюю скорость бегуна в км/ч.', type: 'input', correct: '24',
           expl: '600 / 1,5 = 400 м/мин. 400 · 60 / 1000 = <b>24 км/ч</b>.' },
-        { text: 'Найдите значение выражения: <br>4/11 : (−16/33) + 5<sup>3</sup>/<sub>4</sub>', type: 'input', correct: '5',
+        { text: 'Найдите значение выражения: <br><span class="frac"><span>4</span><span>11</span></span> : <span class="frac"><span>−16</span><span>33</span></span> + 5<span class="frac"><span>3</span><span>4</span></span>', type: 'input', correct: '5',
           expl: '4/11 · (−33/16) = −3/4 = −0,75. Далее −0,75 + 5,75 = <b>5</b>.' },
         { text: 'Товар сначала подорожал на 25%, а затем подешевел на 20%. На сколько процентов изменилась итоговая цена по сравнению с первоначальной?', type: 'input', correct: '0',
           expl: '1,25 · 0,8 = 1 — цена вернулась к исходной, изменение <b>0%</b>. Проценты «туда-обратно» не сокращаются напрямую!' },
@@ -72,7 +74,7 @@ const MATH_COURSE = {
           correct: [0, 2, 3],
           expl: '1% от 300 — это 300/100 = 3, а не 30. Остальные утверждения верны.' }
       ],
-      gens: ['genPhone', 'genDiscount', 'genPercentDrop', 'genSpeed', 'genPercentOf']
+      gens: ['genPhone', 'genDiscount', 'genPercentDrop', 'genSpeed', 'genPercentOf', 'genFracAdd', 'genFracDiv']
     },
 
     /* ---------- 2. Степени и логарифмы ---------- */
@@ -115,7 +117,7 @@ const MATH_COURSE = {
           <p>Выделение полного квадрата: x² + 6x + 5 = (x + 3)² − 4 — ключ к задачам с параметром.</p>` }
       ],
       pool: [
-        { text: 'Найдите значение выражения: <br>49<sup>3x+1</sup> / 7<sup>6x−1</sup>', type: 'input', correct: '343',
+        { text: 'Найдите значение выражения: <br><span class="frac"><span>49<sup>3x+1</sup></span><span>7<sup>6x−1</sup></span></span>', type: 'input', correct: '343',
           expl: '49 = 7², значит числитель 7<sup>6x+2</sup>. Разность показателей: (6x+2) − (6x−1) = 3, ответ 7³ = <b>343</b>.' },
         { text: 'Найдите значение выражения: <br>log<sub>5</sub> 250 − log<sub>5</sub> 2', type: 'input', correct: '3',
           expl: 'Разность логарифмов: log₅(250/2) = log₅ 125 = log₅ 5³ = <b>3</b>.' },
@@ -135,7 +137,7 @@ const MATH_COURSE = {
         { text: 'Вычислите: log<sub>4</sub> 48 − log<sub>4</sub> 3 + 6<sup>1/lg 24</sup> · 4<sup>1/lg 24</sup>', type: 'input', correct: '12', hard: true,
           expl: 'log₄48 − log₄3 = log₄16 = 2. Далее 6·4 = 24, а 1/lg 24 = log₂₄10, поэтому 24^(log₂₄10) = 10. Итого 2 + 10 = <b>12</b>. Из открытого билета ТУСУР.' }
       ],
-      gens: ['genPower', 'genLogValue', 'genPowerMix', 'genLogSum']
+      gens: ['genPower', 'genLogValue', 'genPowerMix', 'genLogSum', 'genSqrtProd']
     },
 
     /* ---------- 3. Уравнения и системы ---------- */
@@ -190,7 +192,7 @@ const MATH_COURSE = {
         { text: 'Решите уравнение: 4√(x − 1) = 6 − x', type: 'input', correct: '2', hard: true,
           expl: 'Возводим в квадрат: 16(x−1) = 36 − 12x + x² → x² − 28x + 52 = 0 → x = 2 или x = 26. Правая часть 6 − x должна быть ≥ 0, поэтому x = 26 — посторонний. Ответ: <b>2</b>. Из открытого билета ТУСУР.' }
       ],
-      gens: ['genLogEq', 'genExpEq', 'genVieta', 'genLinSys']
+      gens: ['genLogEq', 'genExpEq', 'genVieta', 'genLinSys', 'genQuadRoot']
     },
 
     /* ---------- 4. Неравенства ---------- */
@@ -332,7 +334,7 @@ const MATH_COURSE = {
           <p>Для отбора корней на отрезке подставляй n = 0, ±1, ±2… и проверяй попадание.</p>` }
       ],
       pool: [
-        { text: 'Найдите значение выражения: <br>4 cos 146° / cos 34°', type: 'input', correct: ['-4', '−4'],
+        { text: 'Найдите значение выражения: <br><span class="frac"><span>4 cos 146°</span><span>cos 34°</span></span>', type: 'input', correct: ['-4', '−4'],
           expl: 'cos 146° = cos(180° − 34°) = −cos 34°. Дробь равна −4·cos34°/cos34° = <b>−4</b>.' },
         { text: 'Решите уравнение: cos 2x − 5√2·cos x − 5 = 0.<br>В ответе укажите наибольший отрицательный корень в градусах (без символа градуса).', type: 'input', correct: ['-135', '−135'], hard: true,
           expl: 'cos2x = 2cos²x − 1. Замена t = cosx: 2t² − 5√2t − 6 = 0, D = 50 + 48 = 98, t = (5√2 ± 7√2)/4. t₁ = 3√2 > 1 — не подходит, t₂ = −√2/2. cos x = −√2/2 → x = ±135° + 360°k. Наибольший отрицательный: <b>−135</b>.' },
@@ -454,7 +456,7 @@ const MATH_COURSE = {
         { text: 'В треугольнике ABC стороны AC = BC = 20, AB = 32. Найдите sin A.', type: 'input', correct: ['0,6', '0.6'], hard: true,
           expl: 'Высота из C к AB делит основание пополам: h = √(20² − 16²) = √144 = 12. sin A = h/AC = 12/20 = <b>0,6</b>. Из открытого билета ТУСУР.' }
       ],
-      gens: ['genPythag', 'genTriArea', 'genThirdAngle']
+      gens: ['genPythag', 'genTriArea', 'genThirdAngle', 'genCirc', 'genTrapez']
     },
 
     /* ---------- 8. Стереометрия ---------- */
@@ -492,7 +494,7 @@ const MATH_COURSE = {
         { text: 'Объём конуса равен 45. Найдите объём цилиндра с таким же основанием и такой же высотой.', type: 'input', correct: '135',
           expl: 'V конуса = ⅓ объёма цилиндра, значит цилиндр в 3 раза больше: 45 · 3 = <b>135</b>.' }
       ],
-      gens: ['genBoxV', 'gen3dDist', 'genCylinder']
+      gens: ['genBoxV', 'gen3dDist', 'genCylinder', 'genConeVol']
     },
 
     /* ---------- 9. Вероятность ---------- */
@@ -545,7 +547,7 @@ const MATH_COURSE = {
         { text: 'Дан ряд чисел: 1, 3, 3, 7, 11. Найдите его медиану.', type: 'input', correct: '3',
           expl: 'Ряд уже упорядочен, посередине третье число — <b>3</b>. (Среднее арифметическое здесь 5, мода 3.)' }
       ],
-      gens: ['genCoin', 'genBalls', 'genOpposite']
+      gens: ['genCoin', 'genBalls', 'genOpposite', 'genDice']
     },
 
     /* ---------- 10. Задачи повышенной сложности ---------- */
@@ -592,7 +594,7 @@ const MATH_COURSE = {
         { text: 'Найдите наименьшее натуральное число, кратное 12, сумма цифр которого равна 12.', type: 'input', correct: '48', hard: true,
           expl: 'Перебираем кратные 12: 12 (сумма 3), 24 (6), 36 (9), 48 (12) — подходит. Ответ: <b>48</b>.' }
       ],
-      gens: ['genCredit']
+      gens: ['genCredit', 'genArithProg', 'genGeomProg']
     }
   ],
 
@@ -601,16 +603,16 @@ const MATH_COURSE = {
     { text: 'На счету Машиного мобильного телефона было 53 рубля, а после разговора с Леной осталось 8 рублей. Сколько минут длился разговор, если одна минута стоит 2 рубля 50 копеек?', type: 'input', correct: '18', expl: '(53 − 8) / 2,5 = 18.' },
     { text: 'Симметричную монету бросают дважды. Найдите вероятность исхода ОР (первый раз орёл, второй — решка).', type: 'input', correct: ['0,25', '0.25'], expl: '4 равновозможных исхода, P = 1/4 = 0,25.' },
     { text: 'Бегун пробежал 600 метров за 1,5 минуты. Найдите среднюю скорость в км/ч.', type: 'input', correct: '24', expl: '400 м/мин = 24 км/ч.' },
-    { text: 'Найдите значение выражения: 4/11 : (−16/33) + 5¾', type: 'input', correct: '5', expl: '4/11 · (−33/16) = −0,75; −0,75 + 5,75 = 5.' },
+    { text: 'Найдите значение выражения: <span class="frac"><span>4</span><span>11</span></span> : <span class="frac"><span>−16</span><span>33</span></span> + 5<span class="frac"><span>3</span><span>4</span></span>', type: 'input', correct: '5', expl: '4/11 · (−33/16) = −0,75; −0,75 + 5,75 = 5.' },
     { text: 'Число ДТП летом составило 0,85 числа ДТП зимой. На сколько процентов уменьшилось число ДТП летом?', type: 'input', correct: '15', expl: '(1 − 0,85)·100 = 15%.' },
     { text: 'Найдите расстояние между точками A(1; −2; 3) и B(3; −1; 5).', type: 'input', correct: '3', expl: '√(4 + 1 + 4) = 3.' },
-    { text: 'Найдите значение выражения: 49<sup>3x+1</sup> / 7<sup>6x−1</sup>', type: 'input', correct: '343', expl: '7^(6x+2−6x+1) = 7³ = 343.' },
+    { text: 'Найдите значение выражения: <span class="frac"><span>49<sup>3x+1</sup></span><span>7<sup>6x−1</sup></span></span>', type: 'input', correct: '343', expl: '7^(6x+2−6x+1) = 7³ = 343.' },
     { text: 'Найдите корень уравнения: log<sub>2</sub>(4 − x) = 7', type: 'input', correct: ['-124', '−124'], expl: '4 − x = 128 → x = −124.' },
     { text: 'Найдите пятизначное натуральное число, кратное 3, сумма цифр которого равна их произведению. Укажите какое-нибудь одно такое число.', type: 'input', correct: '11133', check: 'digits5', expl: 'Например 11133: сумма 9 = произведение 9, делится на 3.' },
     { text: 'Прямая y = 3x + 6 параллельна касательной к графику функции y = x² + 5x + 4. Найдите абсциссу точки касания.', type: 'input', correct: ['-1', '−1'], expl: '2x + 5 = 3 → x = −1.' },
     { text: 'Решите неравенство log<sub>2</sub>(x−3) + log<sub>2</sub>(x−1) ≤ 3. В ответе укажите наибольшее решение.', type: 'input', correct: '5', expl: 'ОДЗ x>3; (x−3)(x−1) ≤ 8 → x ∈ (3; 5]. Ответ 5.' },
     { text: 'Решите систему: 3x + 7y = 15; 7x − 2y = −20. В ответе укажите x − y.', type: 'input', correct: ['-5', '−5'], expl: 'x = −2, y = 3, x − y = −5.' },
-    { text: 'Найдите значение выражения: 4 cos 146° / cos 34°', type: 'input', correct: ['-4', '−4'], expl: 'cos146° = −cos34° → −4.' },
+    { text: 'Найдите значение выражения: <span class="frac"><span>4 cos 146°</span><span>cos 34°</span></span>', type: 'input', correct: ['-4', '−4'], expl: 'cos146° = −cos34° → −4.' },
     { text: 'В выпуклом четырёхугольнике ABCD: AB = BC, AD = CD, ∠B = 32°, ∠D = 94°. Найдите угол A (в градусах).', type: 'input', correct: '117', expl: '∠A = ∠C = (360 − 32 − 94)/2 = 117.' },
     { text: 'Вписанная окружность равнобедренного треугольника делит боковую сторону на отрезки 5 и 3 (от вершины, противолежащей основанию). Найдите периметр треугольника.', type: 'input', correct: '22', expl: 'Боковые по 8, основание 6, P = 22.' },
     { text: 'В цилиндрический сосуд налили 2000 см³ воды (уровень 12 см). После погружения детали уровень поднялся на 9 см. Найдите объём детали в см³.', type: 'input', correct: '1500', expl: '(2000/12)·9 = 1500.' },
@@ -950,6 +952,111 @@ const MATH_GENS = {
       text: `Функция задана формулой y = ${k}/x. Найдите значение функции при x = ${x}.`,
       type: 'input', correct: [String(k / x), String(k / x).replace('-', '−')],
       expl: `y = ${k}/(${x}) = <b>${k / x}</b>.`
+    };
+  },
+  genFracAdd() {
+    const pairs = [[2, 5], [4, 5], [2, 25], [4, 25], [5, 4], [10, 4], [20, 5], [2, 10]];
+    const [b, d] = pick(pairs);
+    const a = rnd(1, b * 2), c = rnd(1, d * 2);
+    const ans = fmtNum(a / b + c / d);
+    return {
+      text: `Найдите значение выражения: <br>${frac(a, b)} + ${frac(c, d)}`,
+      type: 'input', correct: [ans, ans.replace(',', '.')],
+      expl: `Приводим к общему знаменателю: ${fmtNum(a / b)} + ${fmtNum(c / d)} = <b>${ans}</b>.`
+    };
+  },
+  genFracDiv() {
+    const p = rnd(2, 9), q = rnd(2, 9), k = rnd(2, 6);
+    return {
+      text: `Найдите значение выражения: <br>${frac(p, q)} : ${frac(p, q * k)}`,
+      type: 'input', correct: String(k),
+      expl: `Деление — умножение на перевёрнутую дробь: ${frac(p, q)} · ${frac(q * k, p)} = ${frac(q * k, q)} = <b>${k}</b>.`
+    };
+  },
+  genQuadRoot() {
+    let r1 = rnd(-7, 7), r2 = rnd(-7, 7);
+    if (r1 === r2) r2 = r1 + rnd(1, 3);
+    if (r1 > r2) [r1, r2] = [r2, r1];
+    const p = -(r1 + r2), q = r1 * r2;
+    const wantMin = Math.random() < 0.5;
+    const ans = wantMin ? r1 : r2;
+    return {
+      text: `Решите уравнение x² ${p !== 0 ? sgnTerm(p) + 'x ' : ''}${sgnTerm(q)} = 0.<br>В ответе укажите ${wantMin ? 'меньший' : 'больший'} корень.`,
+      type: 'input', correct: [String(ans), String(ans).replace('-', '−')],
+      expl: `По теореме Виета корни ${r1} и ${r2} (сумма ${r1 + r2}, произведение ${q}). ${wantMin ? 'Меньший' : 'Больший'}: <b>${ans}</b>.`
+    };
+  },
+  genSqrtProd() {
+    const m = pick([2, 3, 5, 6, 7]), k = rnd(2, 5);
+    return {
+      text: `Найдите значение выражения: √${k * k * m} · √${m}`,
+      type: 'input', correct: String(k * m),
+      expl: `√${k * k * m} · √${m} = √${k * k * m * m} = √(${k * m})² = <b>${k * m}</b>.`
+    };
+  },
+  genCirc() {
+    const R = rnd(2, 12);
+    if (Math.random() < 0.5) {
+      return {
+        text: `Радиус окружности равен ${R}. Найдите её длину, делённую на π.`,
+        type: 'input', correct: String(2 * R),
+        expl: `C = 2πR = ${2 * R}π. Ответ: <b>${2 * R}</b>.`
+      };
+    }
+    return {
+      text: `Радиус круга равен ${R}. Найдите его площадь, делённую на π.`,
+      type: 'input', correct: String(R * R),
+      expl: `S = πR² = ${R * R}π. Ответ: <b>${R * R}</b>.`
+    };
+  },
+  genTrapez() {
+    const a = rnd(3, 10), b = a + pick([2, 4, 6]), h = rnd(2, 8);
+    return {
+      text: `Основания трапеции равны ${a} и ${b}, высота — ${h}. Найдите площадь трапеции.`,
+      type: 'input', correct: String((a + b) / 2 * h),
+      expl: `S = (a + b)/2 · h = ${(a + b) / 2} · ${h} = <b>${(a + b) / 2 * h}</b>.`
+    };
+  },
+  genConeVol() {
+    const k = rnd(5, 60);
+    if (Math.random() < 0.5) {
+      return {
+        text: `Объём цилиндра равен ${3 * k}. Найдите объём конуса с таким же основанием и такой же высотой.`,
+        type: 'input', correct: String(k),
+        expl: `Конус втрое меньше цилиндра: ${3 * k} / 3 = <b>${k}</b>.`
+      };
+    }
+    return {
+      text: `Объём конуса равен ${k}. Найдите объём цилиндра с таким же основанием и такой же высотой.`,
+      type: 'input', correct: String(3 * k),
+      expl: `Цилиндр втрое больше конуса: ${k} · 3 = <b>${3 * k}</b>.`
+    };
+  },
+  genDice() {
+    const n = pick([5, 6, 7, 8, 9]);
+    const cnt = { 5: 4, 6: 5, 7: 6, 8: 5, 9: 4 }[n];
+    return {
+      text: `Два игральных кубика бросают одновременно. Сколько из 36 равновозможных исходов дают в сумме ${n} очков?`,
+      type: 'input', correct: String(cnt),
+      expl: `Перебираем пары (первый; второй) с суммой ${n}: их ровно <b>${cnt}</b>. P = ${cnt}/36.`
+    };
+  },
+  genArithProg() {
+    const a1 = rnd(-10, 10), d = rnd(2, 7) * pick([1, -1]), n = rnd(5, 15);
+    const an = a1 + (n - 1) * d;
+    return {
+      text: `Арифметическая прогрессия задана условиями: a₁ = ${a1}, разность d = ${d}. Найдите a<sub>${n}</sub>.`,
+      type: 'input', correct: [String(an), String(an).replace('-', '−')],
+      expl: `aₙ = a₁ + (n−1)d = ${a1} + ${n - 1}·(${d}) = <b>${an}</b>.`
+    };
+  },
+  genGeomProg() {
+    const b1 = rnd(2, 5), q = pick([2, 3]), n = rnd(4, 6);
+    const bn = b1 * Math.pow(q, n - 1);
+    return {
+      text: `Геометрическая прогрессия задана условиями: b₁ = ${b1}, знаменатель q = ${q}. Найдите b<sub>${n}</sub>.`,
+      type: 'input', correct: String(bn),
+      expl: `bₙ = b₁·q<sup>n−1</sup> = ${b1}·${q}<sup>${n - 1}</sup> = ${b1}·${Math.pow(q, n - 1)} = <b>${bn}</b>.`
     };
   },
   genCredit() {

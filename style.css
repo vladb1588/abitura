@@ -26,6 +26,22 @@
   --shadow:rgba(0,0,0,.7);
 }
 
+/* ---------- Палитры: меняют основной (зелёный) цвет действий ---------- */
+:root[data-palette="ocean"]{ --green:#06b6d4; --green-sh:#0891b2; --green-bg:#cffafe; --orange:#0ea5e9; }
+:root[data-palette="sunset"]{ --green:#f97316; --green-sh:#ea580c; --green-bg:#ffedd5; --purple:#f43f5e; --purple-sh:#e11d48; }
+:root[data-palette="grape"]{ --green:#a855f7; --green-sh:#9333ea; --green-bg:#f3e8ff; --orange:#d946ef; }
+:root[data-theme="dark"][data-palette="ocean"]{ --green-bg:#083344; }
+:root[data-theme="dark"][data-palette="sunset"]{ --green-bg:#431407; }
+:root[data-theme="dark"][data-palette="grape"]{ --green-bg:#3b0764; }
+
+/* ---------- Вертикальные дроби в заданиях ---------- */
+.frac{
+  display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle;
+  margin:0 3px; line-height:1.15; font-size:.92em;
+}
+.frac > span:first-child{ border-bottom:2px solid currentColor; padding:0 6px 1px; }
+.frac > span:last-child{ padding:1px 6px 0; }
+
 html,body{ height:100%; }
 body{
   font-family:'Nunito','Segoe UI',system-ui,-apple-system,sans-serif;
