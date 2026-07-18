@@ -21,13 +21,13 @@ const CHECKS = {
 /* ---------- Прогресс и настройки ---------- */
 function defaultP() {
   return {
-    xp: 0, streak: 0, lastDay: '', freezes: 0,
+    xp: 0, streak: 0, lastDay: '', freezes: 0, seenNews: 0,
     levels: {}, doneStatic: {}, seenTheory: {},
     mistakes: [], examBest: {}, weak: {}, unitAcc: {},
     daily: { day: '', xp: 0, lessons: 0, reviews: 0, blitz: 0 },
     ach: {},
     stats: { lessons: 0, exams: 0, answers: 0, correct: 0, perfect: 0, ai: 0, graduated: 0, blitzBest: 0, history: {} },
-    settings: { theme: 'auto', palette: 'classic', sound: true, goal: 50, examDate: '', apiKey: '', model: 'claude-opus-4-8' }
+    settings: { theme: 'auto', palette: 'classic', bg: 'classic', sound: true, goal: 50, examDate: '', apiKey: '', model: 'claude-opus-4-8' }
   };
 }
 let P = loadP();
@@ -230,6 +230,7 @@ function applyTheme() {
   if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   document.documentElement.dataset.theme = t;
   document.documentElement.dataset.palette = P.settings.palette || 'classic';
+  document.documentElement.dataset.bg = P.settings.bg || 'classic';
 }
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (P.settings.theme === 'auto') applyTheme();
@@ -530,6 +531,7 @@ function showHome() {
       <button class="btn" data-act="smart">🧠 Умная тренировка</button>
       <button class="btn red" data-act="examselect">⏱️ Пробный экзамен</button>
       <button class="btn purple" data-act="ai">🤖 ИИ-задания <span class="ai-badge">AI</span></button>
+      <button class="btn white" data-act="news">✨ Что нового${P.seenNews < NEWS_V ? ' <span class="due-badge">!</span>' : ''}</button>
     </div>`;
   bindTopbar();
   app.querySelectorAll('.subject-card').forEach(el => el.onclick = () => showCourse(el.dataset.subj));
@@ -538,6 +540,7 @@ function showHome() {
   app.querySelector('[data-act="examselect"]').onclick = showExamSelect;
   app.querySelector('[data-act="ai"]').onclick = () => showAI();
   app.querySelector('[data-act="blitz"]').onclick = showBlitz;
+  app.querySelector('[data-act="news"]').onclick = showWhatsNew;
   document.getElementById('ctaBtn').onclick = smartContinue;
 }
 
@@ -1072,6 +1075,52 @@ function finishQuiz() {
   KEYH = e => { if (e.key === 'Enter') done(); };
 }
 
+/* ---------- Что нового: витрина возможностей + журнал обновлений ---------- */
+const NEWS_V = 1; /* увеличивай при заметных обновлениях — на кнопке появится «!» */
+
+const FEATURES = [
+  { ico: '⚡', title: 'Блиц: 60 секунд', desc: 'Задания вперемешку из всех предметов на скорость. Серии, рекорды, бонусный XP.', act: 'blitz' },
+  { ico: '📦', title: 'Повторение по науке', desc: 'Ошибки возвращаются через 1–2–4–7–14 дней — ровно когда мозг начинает забывать (система Лейтнера).', act: 'mistakes' },
+  { ico: '🔥', title: 'Адаптивная сложность', desc: 'Точность в теме ≥80% — задания становятся сложнее, ниже 50% — проще. Само подстраивается.' },
+  { ico: '📖', title: 'Справочник терминов', desc: 'Подчёркнутые слова в теории кликабельны: определение, пример и статья из Википедии.', act: 'gloss' },
+  { ico: '📘', title: 'Теория из задания', desc: 'Забыл правило посреди урока? Кнопка «Теория» в углу задания откроет её, не сбив прогресс.' },
+  { ico: '🖌️', title: 'Палитры и фоны', desc: '4 цвета кнопок и 5 фонов — собери своё оформление, всё работает в светлой и тёмной темах.', act: 'settings' },
+  { ico: '🤖', title: 'ИИ-задания', desc: 'Claude придумывает бесконечные новые задания по любой теме — со своим API-ключом.', act: 'ai' },
+  { ico: '💾', title: 'Резервная копия', desc: 'Экспорт и импорт прогресса файлом — перенеси стрик и XP на другой компьютер или телефон.', act: 'settings' },
+  { ico: '❄️', title: 'Заморозки стрика', desc: 'Каждые 5 дней стрика — заморозка в запас (до 2). Пропустил день — стрик уцелеет.' },
+  { ico: '📋', title: 'План на сегодня', desc: 'Урок + повторение + блиц: три компонента эффективной тренировки с галочками на главной.' }
+];
+
+const CHANGELOG = [
+  { d: '18 июля 2026', items: ['Фоновые темы: Бумага, Мята, Небо, Космос', 'Вкладка «Что нового»', '+20 генераторов — в каждом уроке минимум 3 оригинальных задания', 'Русский тоже генерируется: корни, Н/НН, паронимы, -тся/-ться', 'Адаптивная сложность', 'Вертикальные дроби вместо «примеров в строчку»', '4 палитры кнопок'] },
+  { d: '17 июля 2026', items: ['Публикация на GitHub Pages — теперь это сайт', 'Универсальная версия: подходит для вступительных любого вуза', '+26 заданий из открытых билетов ТУСУР', 'Кнопки «Теория» и «Пропустить» прямо в уроке', 'Шпаргалка по 16-ричной системе'] },
+  { d: 'раньше', items: ['Справочник терминов с Википедией', 'Блиц-режим и заморозки стрика', 'Интервальные повторения ошибок', 'Новые типы заданий: выбор нескольких и сопоставление пар', 'ИИ-генератор заданий', 'Экспорт и импорт прогресса'] }
+];
+
+function showWhatsNew() {
+  KEYH = null;
+  P.seenNews = NEWS_V;
+  saveP();
+  const acts = { blitz: showBlitz, mistakes: () => showMistakes(), gloss: () => showGlossary(), ai: () => showAI(), settings: showSettings };
+  const feats = FEATURES.map((f, i) => `
+    <div class="gloss-item feat" ${f.act ? `data-act="${f.act}"` : ''} style="animation-delay:${i * 0.03}s">
+      <b>${f.ico} ${f.title}${f.act ? ' <span class="arrow-sm">›</span>' : ''}</b>
+      <span>${f.desc}</span>
+    </div>`).join('');
+  const log = CHANGELOG.map(c => `
+    <div class="theory-card">
+      <h3>🗓️ ${c.d}</h3>
+      <ul>${c.items.map(i => `<li>${i}</li>`).join('')}</ul>
+    </div>`).join('');
+  app.innerHTML = `${topbar('✨ Что нового', true, '')}
+    <h3 class="section-title">Возможности, о которых стоит знать</h3>
+    <div class="gloss-list">${feats}</div>
+    <h3 class="section-title">Журнал обновлений</h3>
+    <div class="theory" style="padding-top:6px;">${log}</div>`;
+  bindTopbar(showHome);
+  app.querySelectorAll('.feat[data-act]').forEach(el => el.onclick = () => acts[el.dataset.act]());
+}
+
 /* ---------- Блиц: 60 секунд на скорость ---------- */
 let B = null;
 const BLITZ_MS = 60000;
@@ -1476,6 +1525,11 @@ function showSettings() {
         ${seg('palette', [{ v: 'classic', t: '🟢 Классика' }, { v: 'ocean', t: '🌊 Океан' }, { v: 'sunset', t: '🌅 Закат' }, { v: 'grape', t: '🍇 Виноград' }], st.palette || 'classic')}
       </div>
       <div class="set-row">
+        <h4>🌆 Фон</h4>
+        ${seg('bg', [{ v: 'classic', t: '⬜ Классика' }, { v: 'cream', t: '📜 Бумага' }, { v: 'mint', t: '🌿 Мята' }, { v: 'sky', t: '☁️ Небо' }, { v: 'space', t: '🌌 Космос' }], st.bg || 'classic')}
+        <div class="hint">Фон и палитра кнопок настраиваются независимо и работают в обеих темах.</div>
+      </div>
+      <div class="set-row">
         <h4>🔊 Звуки</h4>
         ${seg('sound', [{ v: 'on', t: 'Вкл' }, { v: 'off', t: 'Выкл' }], st.sound ? 'on' : 'off')}
       </div>
@@ -1517,6 +1571,7 @@ function showSettings() {
       const name = segEl.dataset.set, v = b.dataset.v;
       if (name === 'theme') { P.settings.theme = v; applyTheme(); }
       if (name === 'palette') { P.settings.palette = v; applyTheme(); }
+      if (name === 'bg') { P.settings.bg = v; applyTheme(); }
       if (name === 'sound') { P.settings.sound = v === 'on'; if (v === 'on') playSound('correct'); }
       if (name === 'goal') P.settings.goal = Number(v);
       if (name === 'model') P.settings.model = v;

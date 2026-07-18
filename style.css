@@ -7,7 +7,7 @@
   --red:#ff4b4b;   --red-sh:#ea2b2b;   --red-bg:#ffdfe0;
   --yellow:#ffc800; --yellow-sh:#e6a800;
   --purple:#ce82ff; --purple-sh:#a568cc;
-  --orange:#ff9600;
+  --orange:#ff9600; --orange-sh:#cc7a00;
 
   --bg:#ffffff; --bg2:#f7f7f7; --card:#ffffff;
   --line:#e5e5e5; --line-sh:#c8c8c8;
@@ -27,12 +27,22 @@
 }
 
 /* ---------- Палитры: меняют основной (зелёный) цвет действий ---------- */
-:root[data-palette="ocean"]{ --green:#06b6d4; --green-sh:#0891b2; --green-bg:#cffafe; --orange:#0ea5e9; }
+:root[data-palette="ocean"]{ --green:#06b6d4; --green-sh:#0891b2; --green-bg:#cffafe; --orange:#0ea5e9; --orange-sh:#0369a1; }
 :root[data-palette="sunset"]{ --green:#f97316; --green-sh:#ea580c; --green-bg:#ffedd5; --purple:#f43f5e; --purple-sh:#e11d48; }
-:root[data-palette="grape"]{ --green:#a855f7; --green-sh:#9333ea; --green-bg:#f3e8ff; --orange:#d946ef; }
+:root[data-palette="grape"]{ --green:#a855f7; --green-sh:#9333ea; --green-bg:#f3e8ff; --orange:#d946ef; --orange-sh:#a21caf; }
 :root[data-theme="dark"][data-palette="ocean"]{ --green-bg:#083344; }
 :root[data-theme="dark"][data-palette="sunset"]{ --green-bg:#431407; }
 :root[data-theme="dark"][data-palette="grape"]{ --green-bg:#3b0764; }
+
+/* ---------- Фоновые темы (настройка «Фон») ---------- */
+:root[data-bg="cream"]{ --bg:#faf5ec; --bg2:#f2ead9; --card:#fffdf7; --line:#e7dcc4; --line-sh:#cfc0a0; --gray:#e7dcc4; --gray-sh:#cfc0a0; --input-bg:#fffdf7; }
+:root[data-theme="dark"][data-bg="cream"]{ --bg:#1d1712; --bg2:#292017; --card:#292017; --line:#443826; --line-sh:#35291b; --gray:#443826; --gray-sh:#35291b; --input-bg:#151009; }
+:root[data-bg="mint"]{ --bg:#f1faf3; --bg2:#e3f4e8; --card:#fbfffc; --line:#d4e9db; --line-sh:#b5d4c0; --gray:#d4e9db; --gray-sh:#b5d4c0; --input-bg:#fbfffc; }
+:root[data-theme="dark"][data-bg="mint"]{ --bg:#10201a; --bg2:#162c22; --card:#162c22; --line:#2b4a3a; --line-sh:#1f3a2c; --gray:#2b4a3a; --gray-sh:#1f3a2c; --input-bg:#0b1712; }
+:root[data-bg="sky"]{ --bg:#f0f7ff; --bg2:#e1efff; --card:#fbfdff; --line:#d3e5f7; --line-sh:#aecbe8; --gray:#d3e5f7; --gray-sh:#aecbe8; --input-bg:#fbfdff; }
+:root[data-theme="dark"][data-bg="sky"]{ --bg:#0d1b2a; --bg2:#13263a; --card:#13263a; --line:#274764; --line-sh:#1c344c; --gray:#274764; --gray-sh:#1c344c; --input-bg:#091320; }
+:root[data-bg="space"]{ --bg:#f5f3ff; --bg2:#ebe7ff; --card:#fdfcff; --line:#ddd6f3; --line-sh:#c3b8e6; --gray:#ddd6f3; --gray-sh:#c3b8e6; --input-bg:#fdfcff; }
+:root[data-theme="dark"][data-bg="space"]{ --bg:#131028; --bg2:#1b1738; --card:#1b1738; --line:#322a5e; --line-sh:#262047; --gray:#322a5e; --gray-sh:#262047; --input-bg:#0d0b1d; }
 
 /* ---------- Вертикальные дроби в заданиях ---------- */
 .frac{
@@ -369,8 +379,8 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 .empty .big{ font-size:52px; margin-bottom:10px; }
 
 /* ---------- Кнопка-оранж и сетка инструментов ---------- */
-.btn.orange{ background:var(--orange); box-shadow:0 4px 0 #cc7a00; }
-.btn.orange:active{ box-shadow:0 1px 0 #cc7a00; }
+.btn.orange{ background:var(--orange); box-shadow:0 4px 0 var(--orange-sh); }
+.btn.orange:active{ box-shadow:0 1px 0 var(--orange-sh); }
 .toolgrid .span2{ grid-column:span 2; }
 .due-badge{
   display:inline-flex; align-items:center; justify-content:center;
@@ -441,6 +451,8 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 .gloss-item:hover{ background:var(--bg2); border-color:var(--blue); }
 .gloss-item b{ color:var(--head); display:block; font-size:16px; }
 .gloss-item span{ font-size:13px; color:var(--sub); }
+.feat{ animation:slideUp .3s ease both; }
+.feat .arrow-sm{ color:var(--gray-txt); font-weight:800; }
 
 /* ---------- Кнопки в квизе: теория и пропуск ---------- */
 .qtype-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
