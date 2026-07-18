@@ -27,7 +27,7 @@ function defaultP() {
     daily: { day: '', xp: 0, lessons: 0, reviews: 0, blitz: 0 },
     ach: {},
     stats: { lessons: 0, exams: 0, answers: 0, correct: 0, perfect: 0, ai: 0, graduated: 0, blitzBest: 0, history: {} },
-    settings: { theme: 'auto', palette: 'classic', bg: 'classic', sound: true, goal: 50, examDate: '', apiKey: '', model: 'claude-opus-4-8' }
+    settings: { theme: 'auto', palette: 'classic', bg: 'classic', sound: true, goal: 50, examDate: '', showAI: false, apiKey: '', model: 'claude-opus-4-8' }
   };
 }
 let P = loadP();
@@ -583,7 +583,7 @@ function showHome() {
       ${tool('mistakes', 'refresh', 'blue', 'Повторение', 'ошибки по расписанию', due ? ` <span class="cnt">${due}</span>` : '')}
       ${tool('smart', 'target', 'violet', 'Умная', 'слабые темы')}
       ${tool('examselect', 'note', 'amber', 'Экзамен', 'пробный с таймером')}
-      ${tool('ai', 'spark', 'violet', 'ИИ-задания', 'бесконечные, от Claude')}
+      ${P.settings.showAI ? tool('ai', 'spark', 'violet', 'ИИ-задания', 'бесконечные, от Claude') : ''}
     </div>
     <button class="tool tool-slim" data-act="news">
       <span class="tool-ic">${ic('star')}</span>
@@ -595,7 +595,7 @@ function showHome() {
   app.querySelector('[data-act="mistakes"]').onclick = () => showMistakes();
   app.querySelector('[data-act="smart"]').onclick = startSmart;
   app.querySelector('[data-act="examselect"]').onclick = showExamSelect;
-  app.querySelector('[data-act="ai"]').onclick = () => showAI();
+  const aiBtn = app.querySelector('[data-act="ai"]'); if (aiBtn) aiBtn.onclick = () => showAI();
   app.querySelector('[data-act="blitz"]').onclick = showBlitz;
   app.querySelector('[data-act="news"]').onclick = showWhatsNew;
   document.getElementById('ctaBtn').onclick = smartContinue;
@@ -1031,7 +1031,6 @@ function submitAnswer(q, val, skipped) {
         <h3>${ok ? pick(['Отлично!', 'Верно!', 'Так держать!', 'Именно так!', 'Красота!']) : (skipped ? 'Пропущено' : 'Неверно')}</h3>
         ${!ok ? `<div class="expl"><b>Правильный ответ: ${esc(correctText)}</b></div>` : ''}
         ${q.expl ? `<div class="expl">${q.expl}</div>` : ''}
-        ${!ok ? `<div class="expl">Задание вернётся в конце для повторения</div>` : ''}
       </div>
     </div>
     <button class="btn ${ok ? '' : 'red'} wide" id="contBtn">Продолжить</button>`;
@@ -1581,7 +1580,7 @@ function showSettings() {
       </div>
       <div class="set-row">
         <h4>🖌️ Палитра</h4>
-        ${seg('palette', [{ v: 'classic', t: '🟢 Классика' }, { v: 'ocean', t: '🌊 Океан' }, { v: 'sunset', t: '🌅 Закат' }, { v: 'grape', t: '🍇 Виноград' }], st.palette || 'classic')}
+        ${seg('palette', [{ v: 'classic', t: '🟢 Классика' }, { v: 'ocean', t: '🌊 Океан' }, { v: 'sunset', t: '🌅 Закат' }, { v: 'grape', t: '🍇 Виноград' }, { v: 'mono', t: '◼ Графит' }], st.palette || 'classic')}
       </div>
       <div class="set-row">
         <h4>🌆 Фон</h4>
@@ -1602,12 +1601,20 @@ function showSettings() {
         <div class="hint">На главном экране появится обратный отсчёт.</div>
       </div>
       <div class="set-row">
+        <h4>🧪 Экспериментальное</h4>
+        <div class="exp-row">
+          <div><b>ИИ-задания</b><div class="hint" style="margin-top:2px;">Бесконечные задания от нейросети Claude. Нужен свой API-ключ. Пока в тестовом режиме — включи, если хочешь попробовать.</div></div>
+          ${seg('showai', [{ v: 'on', t: 'Вкл' }, { v: 'off', t: 'Выкл' }], st.showAI ? 'on' : 'off')}
+        </div>
+      </div>
+      ${st.showAI ? `
+      <div class="set-row">
         <h4>🤖 ИИ-генератор заданий <span class="ai-badge">AI</span></h4>
         <input type="password" class="set-input" id="apiKey" placeholder="sk-ant-..." value="${esc(st.apiKey)}">
         <div class="hint">API-ключ Anthropic для генерации заданий нейросетью Claude. Получить: console.anthropic.com → API Keys. Ключ хранится только в твоём браузере.</div>
         <div style="height:10px"></div>
         ${seg('model', [{ v: 'claude-opus-4-8', t: 'Opus (умнее)' }, { v: 'claude-sonnet-5', t: 'Sonnet' }, { v: 'claude-haiku-4-5', t: 'Haiku (дешевле)' }], st.model)}
-      </div>
+      </div>` : ''}
       <div class="set-row">
         <h4>💾 Резервная копия</h4>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -1634,6 +1641,7 @@ function showSettings() {
       if (name === 'sound') { P.settings.sound = v === 'on'; if (v === 'on') playSound('correct'); }
       if (name === 'goal') P.settings.goal = Number(v);
       if (name === 'model') P.settings.model = v;
+      if (name === 'showai') { P.settings.showAI = v === 'on'; saveP(); showSettings(); return; }
       saveP();
       segEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
     });
@@ -1669,7 +1677,8 @@ function showSettings() {
     };
     r.readAsText(f);
   };
-  document.getElementById('apiKey').onchange = e => { P.settings.apiKey = e.target.value.trim(); saveP(); };
+  const apiKeyEl = document.getElementById('apiKey');
+  if (apiKeyEl) apiKeyEl.onchange = e => { P.settings.apiKey = e.target.value.trim(); saveP(); };
   document.getElementById('resetBtn').onclick = () => {
     if (confirm('Точно сбросить весь прогресс? Это действие необратимо.')) {
       const st = P.settings;
