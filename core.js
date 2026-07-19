@@ -1,13 +1,31 @@
 /* ===== Ядро: прогресс, настройки, достижения, утилиты, тема, звук, шапка, справочник ===== */
 /* ===== Абитура — движок ===== */
 
-const COURSES = { math: MATH_COURSE, inf: INF_COURSE, rus: RUS_COURSE };
-const GENS = Object.assign({}, MATH_GENS, INF_GENS, RUS_GENS, typeof MORSE_GENS !== 'undefined' ? MORSE_GENS : {});
+/* ===== Реестр курсов =====
+   Новый курс = data-файл + script-тег в index.html + одна строка здесь.
+   experimental: имя тумблера в P.settings — курс виден только при включённом. */
+const COURSE_DEFS = [
+  { course: MATH_COURSE, gens: MATH_GENS },
+  { course: INF_COURSE, gens: INF_GENS },
+  { course: RUS_COURSE, gens: RUS_GENS },
+  { course: typeof MORSE_COURSE !== 'undefined' ? MORSE_COURSE : null, gens: typeof MORSE_GENS !== 'undefined' ? MORSE_GENS : {}, experimental: 'showMorse' }
+].filter(d => d.course);
 
-/* экспериментальные курсы включаются тумблером в настройках */
+const COURSES = {};
+const GENS = {};
+const SUBJ_MONO = {};
+COURSE_DEFS.forEach(d => {
+  Object.assign(GENS, d.gens);
+  SUBJ_MONO[d.course.id] = d.course.mono || '?';
+  if (!d.experimental) COURSES[d.course.id] = d.course;
+});
+
+/* экспериментальные курсы включаются тумблерами в настройках */
 function syncExperimental() {
-  if (P.settings.showMorse && typeof MORSE_COURSE !== 'undefined') COURSES.morse = MORSE_COURSE;
-  else delete COURSES.morse;
+  COURSE_DEFS.filter(d => d.experimental).forEach(d => {
+    if (P.settings[d.experimental]) COURSES[d.course.id] = d.course;
+    else delete COURSES[d.course.id];
+  });
 }
 const LESSON_LEN = 6;
 const SMART_LEN = 8;
@@ -230,6 +248,55 @@ function inputModeFor(q) {
   if (all.every(a => /^\d+$/.test(a))) return ' inputmode="numeric"';
   if (all.every(a => /^[\d.,]+$/.test(a))) return ' inputmode="decimal"';
   return '';
+}
+
+/* ---------- Единый рендер тела задания ----------
+   Одни и те же mc/multi/match/input в уроке, экзамене и (частично) блице.
+   opts.id — id для input, opts.value — заполненное значение (экзамен),
+   opts.selected — выбранный индекс mc (экзамен). collectAnswer читает ответ из DOM. */
+function questionBodyHtml(q, opts) {
+  opts = opts || {};
+  const id = opts.id || 'ans';
+  if (q.type === 'mc') {
+    return `<div class="options">${q.options.map((o, i) =>
+      `<button class="option ${opts.selected === i ? 'sel' : ''}" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
+  }
+  if (q.type === 'multi') {
+    return `<div class="multi-hint">☑️ Выбери <b>все</b> верные варианты</div>
+      <div class="options">${q.options.map((o, i) =>
+      `<button class="option" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
+  }
+  if (q.type === 'match') {
+    const rights = shuffle(q.pairs.map(p => p[1]));
+    return `<div class="multi-hint">🔗 Подбери пару для каждой строки</div>
+      <div class="match-list">${q.pairs.map((p, i) => `
+      <div class="match-row" data-i="${i}">
+        <div class="match-left">${p[0]}</div>
+        <select class="match-sel">
+          <option value="">— выбери —</option>
+          ${rights.map(r => `<option value="${esc(r)}">${r}</option>`).join('')}
+        </select>
+      </div>`).join('')}</div>`;
+  }
+  return `<input class="answer-input" id="${id}" autocomplete="off"${inputModeFor(q)} placeholder="${opts.placeholder || 'Введите ответ...'}"${opts.value !== undefined ? ` value="${esc(opts.value)}"` : ''}>`;
+}
+
+/* читает ответ из DOM внутри root по типу задания (для mc опирается на .option.sel) */
+function collectAnswer(q, root, inputId) {
+  root = root || app;
+  if (q.type === 'mc') { const s = root.querySelector('.option.sel'); return s ? Number(s.dataset.i) : null; }
+  if (q.type === 'multi') return [...root.querySelectorAll('.option.sel')].map(el => Number(el.dataset.i));
+  if (q.type === 'match') return [...root.querySelectorAll('.match-row')].map(r => r.querySelector('.match-sel').value);
+  const inp = document.getElementById(inputId || 'ans');
+  return inp ? inp.value : '';
+}
+
+/* правильный ответ человекочитаемо — для разбора */
+function correctText(q) {
+  if (q.type === 'mc') return q.options[q.correct];
+  if (q.type === 'multi') return q.correct.map(i => q.options[i]).join(' · ');
+  if (q.type === 'match') return q.pairs.map(p => `${p[0]} → ${p[1]}`).join('; ');
+  return [].concat(q.correct)[0];
 }
 
 function unitLevel(subj, unitId) { return (P.levels[subj] || {})[unitId] || 0; }

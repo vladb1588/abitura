@@ -372,28 +372,7 @@ const MODE_LABEL = { lesson: 'Задание', mistakes: 'Повторение',
 function renderQuiz() {
   const q = S.queue[S.pos];
   const progress = Math.round(S.answered / S.total * 100);
-  let body;
-  if (q.type === 'mc') {
-    body = `<div class="options">${q.options.map((o, i) =>
-      `<button class="option" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
-  } else if (q.type === 'multi') {
-    body = `<div class="multi-hint">☑️ Выбери <b>все</b> верные варианты</div>
-      <div class="options">${q.options.map((o, i) =>
-      `<button class="option" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
-  } else if (q.type === 'match') {
-    const rights = shuffle(q.pairs.map(p => p[1]));
-    body = `<div class="multi-hint">🔗 Подбери пару для каждой строки</div>
-      <div class="match-list">${q.pairs.map((p, i) => `
-      <div class="match-row" data-i="${i}">
-        <div class="match-left">${p[0]}</div>
-        <select class="match-sel">
-          <option value="">— выбери —</option>
-          ${rights.map(r => `<option value="${esc(r)}">${r}</option>`).join('')}
-        </select>
-      </div>`).join('')}</div>`;
-  } else {
-    body = `<input class="answer-input" id="ans" autocomplete="off"${inputModeFor(q)} placeholder="Введите ответ...">`;
-  }
+  const body = questionBodyHtml(q);
   /* из какой темы задание — чтобы показать кнопку «Теория» */
   const thSubj = S.mode === 'lesson' ? S.subj : q._subj;
   const thUnit = S.mode === 'lesson' ? COURSES[S.subj].units[S.unitIdx].id : q._unit;
@@ -480,14 +459,7 @@ function renderQuiz() {
     KEYH = null;
   }
 
-  checkBtn.onclick = () => {
-    let val;
-    if (q.type === 'mc') val = selected;
-    else if (q.type === 'multi') val = [...app.querySelectorAll('.option.sel')].map(el => Number(el.dataset.i));
-    else if (q.type === 'match') val = [...app.querySelectorAll('.match-row')].map(r => r.querySelector('.match-sel').value);
-    else val = document.getElementById('ans').value;
-    submitAnswer(q, val);
-  };
+  checkBtn.onclick = () => submitAnswer(q, collectAnswer(q, app, 'ans'));
 }
 
 function submitAnswer(q, val, skipped) {
@@ -549,18 +521,14 @@ function submitAnswer(q, val, skipped) {
   saveP();
 
   const footer = app.querySelector('.quiz-footer');
-  let correctText;
-  if (q.type === 'mc') correctText = q.options[q.correct];
-  else if (q.type === 'multi') correctText = q.correct.map(i => q.options[i]).join(' · ');
-  else if (q.type === 'match') correctText = q.pairs.map(p => `${p[0]} → ${p[1]}`).join('; ');
-  else correctText = [].concat(q.correct)[0];
+  const ctext = correctText(q);
   footer.classList.add(ok ? 'ok' : 'bad');
   footer.innerHTML = `
     <div class="feedback ${ok ? 'okc' : 'badc'}">
       <div class="fico">${ic(ok ? 'check' : 'close')}</div>
       <div>
         <h3>${ok ? pick(['Отлично!', 'Верно!', 'Так держать!', 'Именно так!', 'Красота!']) : (skipped ? 'Пропущено' : 'Неверно')}</h3>
-        ${!ok ? `<div class="expl"><b>Правильный ответ: ${esc(correctText)}</b></div>` : ''}
+        ${!ok ? `<div class="expl"><b>Правильный ответ: ${esc(ctext)}</b></div>` : ''}
         ${q.expl ? `<div class="expl">${q.expl}</div>` : ''}
       </div>
     </div>

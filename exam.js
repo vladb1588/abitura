@@ -64,13 +64,7 @@ function renderExam() {
   const nav = EX.qs.map((_, i) =>
     `<button class="${EX.answers[i] !== null && EX.answers[i] !== '' ? 'answered' : ''} ${i === EX.pos ? 'current' : ''}" data-n="${i}">${i + 1}</button>`
   ).join('');
-  let body;
-  if (q.type === 'mc') {
-    body = `<div class="options">${q.options.map((o, i) =>
-      `<button class="option ${EX.answers[EX.pos] === i ? 'sel' : ''}" data-i="${i}"><span class="key">${i + 1}</span><span>${o}</span></button>`).join('')}</div>`;
-  } else {
-    body = `<input class="answer-input" id="exans" autocomplete="off"${inputModeFor(q)} placeholder="Ваш ответ..." value="${esc(EX.answers[EX.pos] || '')}">`;
-  }
+  const body = questionBodyHtml(q, { id: 'exans', placeholder: 'Ваш ответ...', selected: EX.answers[EX.pos], value: q.type === 'mc' ? undefined : (EX.answers[EX.pos] || '') });
   app.innerHTML = `
     <div class="topbar">
       <button class="back iconbtn" id="exquit">${ic('close')}</button>
@@ -120,10 +114,7 @@ function renderExam() {
 
   function saveCurrent() {
     const cq = EX.qs[EX.pos];
-    if (cq.type !== 'mc') {
-      const inp = document.getElementById('exans');
-      if (inp) EX.answers[EX.pos] = inp.value;
-    }
+    if (cq.type !== 'mc') EX.answers[EX.pos] = collectAnswer(cq, app, 'exans');
   }
 }
 
@@ -144,7 +135,7 @@ function finishExam(timeout) {
     const ok = a !== null && a !== '' && isCorrect(q, a);
     if (ok) correct++;
     const userAns = a === null || a === '' ? '<i>нет ответа</i>' : (q.type === 'mc' ? esc(q.options[a]) : esc(a));
-    const rightAns = q.type === 'mc' ? esc(q.options[q.correct]) : esc([].concat(q.correct)[0]);
+    const rightAns = esc(correctText(q));
     return `<div class="review-item ${ok ? 'ok' : 'bad'}">
       <div class="num">${ic(ok ? 'check' : 'close')} Задание ${i + 1} · ${ok ? 'верно' : 'неверно'}</div>
       <div class="qq">${q.text}</div>

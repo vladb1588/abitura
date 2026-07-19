@@ -152,6 +152,7 @@ const MORSE_GENS = {};
 const MORSE_COURSE = {
   id: 'morse',
   title: 'Азбука Морзе',
+  mono: '·−',
   icon: '·−',
   examTime: 0,
   passMark: 0,

@@ -3,6 +3,7 @@
 const RUS_COURSE = {
   id: 'rus',
   title: 'Русский язык',
+  mono: 'Аб',
   icon: '📖',
   examTime: 100,
   passMark: 40,
