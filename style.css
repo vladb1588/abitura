@@ -636,6 +636,20 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 .plan.onboard{ border-color:var(--blue); }
 .plan.onboard .plan-item{ text-decoration:none; color:var(--text); }
 
+/* ---------- Азбука Морзе ---------- */
+.mcode{
+  font-family:Consolas,Menlo,monospace; font-weight:700; letter-spacing:3px;
+  color:var(--head); white-space:nowrap;
+}
+.mcode.mbig, b.mbig{ font-size:26px; }
+.morse-tbl{ border-collapse:collapse; width:100%; margin:6px 0; }
+.morse-tbl th{ width:36px; font-size:17px; text-align:center; color:var(--head); }
+.morse-tbl td, .morse-tbl th{ padding:6px 8px; border-bottom:1px solid var(--line); }
+.morse-tbl .mn{ font-size:13px; color:var(--sub); }
+.morse-tbl td:last-child{ width:44px; text-align:right; }
+.minibtn.mplay{ padding:5px 9px; vertical-align:middle; }
+.minibtn.mplay .ic{ width:16px; height:16px; }
+
 /* ---------- Коробки интервальных повторений ---------- */
 .srs-boxes{ display:flex; gap:8px; margin:12px 0; }
 .srs-box{

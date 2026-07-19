@@ -4,7 +4,7 @@ let EX = null;
 
 function showExamSelect() {
   KEYH = null;
-  const btns = Object.keys(COURSES).map(s => {
+  const btns = Object.keys(COURSES).filter(s => COURSES[s].exam.length).map(s => {
     const c = COURSES[s];
     return `<button class="btn blue wide" data-s="${s}">${c.icon} ${c.title} — ${c.exam.length} заданий, ${c.examTime} мин</button>`;
   }).join('');
