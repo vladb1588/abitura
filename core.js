@@ -23,7 +23,7 @@ const CHECKS = {
 function defaultP() {
   return {
     xp: 0, streak: 0, lastDay: '', freezes: 0, seenNews: 0,
-    levels: {}, doneStatic: {}, seenTheory: {},
+    levels: {}, doneStatic: {}, seenTheory: {}, unlocked: {}, flagged: {},
     mistakes: [], examBest: {}, weak: {}, unitAcc: {},
     daily: { day: '', xp: 0, lessons: 0, reviews: 0, blitz: 0 },
     ach: {},
@@ -218,7 +218,19 @@ function setUnitLevel(subj, unitId, lv) {
 }
 function unitUnlocked(subj, idx) {
   if (idx === 0) return true;
+  const u = COURSES[subj].units[idx];
+  if (P.unlocked[subj + ':' + u.id]) return true; /* тему открыли досрочно (пропуск) */
   return unitLevel(subj, COURSES[subj].units[idx - 1].id) >= 1;
+}
+function unitFlagged(subj, unitId) { return !!P.flagged[subj + ':' + unitId]; }
+function toggleFlag(subj, unitId) {
+  const k = subj + ':' + unitId;
+  if (P.flagged[k]) delete P.flagged[k]; else P.flagged[k] = true;
+  saveP();
+}
+function flaggedList() {
+  return Object.keys(P.flagged).map(k => { const [s, id] = k.split(':'); return { subj: s, id }; })
+    .filter(x => COURSES[x.subj] && COURSES[x.subj].units.some(u => u.id === x.id));
 }
 function courseProgress(subj) {
   const c = COURSES[subj];
