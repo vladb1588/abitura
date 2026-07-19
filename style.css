@@ -97,6 +97,32 @@ body{
   font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.8px;
   color:var(--sub); padding:22px 22px 4px;
 }
+/* крупная иконка результата (в цветном круге) */
+.big-ic{
+  width:88px; height:88px; margin:0 auto 6px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; animation:popIn .5s ease both;
+}
+.big-ic .ic{ width:46px; height:46px; color:#fff; }
+.big-ic.gold{ background:var(--yellow); }
+.big-ic.gold .ic{ color:#7c5c00; }
+.big-ic.ok{ background:var(--green); }
+.big-ic.neutral{ background:var(--gray); }
+.big-ic.neutral .ic{ color:var(--gray-txt); }
+/* цветной кружок-образец в настройках (палитра/фон) */
+.sw{
+  display:inline-block; width:14px; height:14px; border-radius:50%;
+  vertical-align:-2px; margin-right:6px; border:1px solid rgba(0,0,0,.12);
+}
+/* иконки внутри бейджей/карточек/тостов/разбора */
+.xp-badge .ic, .acc-badge .ic{ width:1em; height:1em; vertical-align:-0.14em; }
+.stat-card .val .ic{ width:.9em; height:.9em; vertical-align:-0.08em; }
+.stat-card .val .ic[viewBox]{ color:var(--sub); }
+.review-item .num .ic{ width:15px; height:15px; vertical-align:-0.2em; }
+.review-item.ok .num .ic{ color:var(--green); }
+.review-item.bad .num .ic{ color:var(--red); }
+.toast .ico .ic{ width:26px; height:26px; color:var(--green); }
+.set-row h4 .ic{ width:17px; height:17px; vertical-align:-0.2em; color:var(--sub); margin-right:3px; }
+.btn .ic{ vertical-align:-0.16em; }
 #app{ max-width:640px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; padding-bottom:40px; }
 
 h1,h2,h3{ font-weight:800; color:var(--head); }
