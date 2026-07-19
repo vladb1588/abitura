@@ -313,10 +313,22 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 .unit-node.locked:hover{ transform:none; }
 .unit-node.locked:active{ transform:none; box-shadow:0 4px 0 var(--gray-sh); }
 .unit-info{ flex:1; min-width:0; }
-.unit-info h3{ font-size:16px; }
+.unit-info h3{ font-size:16px; display:flex; align-items:center; gap:6px; }
+.flag-mark{ display:inline-flex; color:var(--orange); flex:none; }
+.flag-mark .ic{ width:15px; height:15px; }
+.unit-row.flagged{ background:color-mix(in srgb, var(--orange) 7%, transparent); border-radius:14px; }
 .unit-stars{ display:flex; gap:5px; margin-top:5px; }
 .unit-stars .dot{ width:8px; height:8px; border-radius:50%; background:var(--gray); }
 .unit-stars .dot.on{ background:var(--yellow); }
+.unit-actions{ display:flex; align-items:center; gap:8px; flex:none; }
+.flagbtn{
+  border:1px solid var(--line); background:var(--card); color:var(--gray-txt);
+  width:34px; height:34px; border-radius:10px; cursor:pointer; flex:none;
+  display:inline-flex; align-items:center; justify-content:center; transition:color .12s, border-color .12s;
+}
+.flagbtn .ic{ width:17px; height:17px; }
+.flagbtn:hover{ color:var(--orange); border-color:var(--orange); }
+.flagbtn.on{ color:var(--orange); border-color:var(--orange); background:color-mix(in srgb, var(--orange) 10%, transparent); }
 .minibtn{
   border:1px solid var(--line); background:var(--card); color:var(--head);
   font-family:inherit; font-weight:700; font-size:13px; padding:7px 12px;

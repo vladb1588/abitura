@@ -173,19 +173,23 @@ function showCourse(subj) {
   const rows = c.units.map((u, i) => {
     const lv = unitLevel(subj, u.id);
     const unlocked = unitUnlocked(subj, i);
+    const flagged = unitFlagged(subj, u.id);
     let cls = !unlocked ? 'locked' : lv >= MAX_LEVEL ? 'done' : '';
     if (unlocked && lv < MAX_LEVEL && !nextFound) { cls += ' next'; nextFound = true; }
     const glyph = !unlocked ? ic('lock') : lv >= MAX_LEVEL ? ic('crown') : ic('play');
     const stars = Array.from({ length: MAX_LEVEL }, (_, k) =>
       `<span class="dot ${k < lv ? 'on' : ''}"></span>`).join('');
-    return `<div class="unit-row" style="animation-delay:${i * 0.03}s">
+    return `<div class="unit-row ${flagged ? 'flagged' : ''}" style="animation-delay:${i * 0.03}s">
       <div class="unit-node ${cls}" data-idx="${i}">${glyph}</div>
       <div class="unit-info">
-        <h3>${u.title}</h3>
+        <h3>${flagged ? `<span class="flag-mark" title="Отмечено как сложное">${ic('flagFill')}</span>` : ''}${u.title}</h3>
         <div class="unit-stars">${stars}</div>
       </div>
       <div class="unit-actions">
-        ${unlocked ? `<button class="minibtn" data-th="${i}">${ic('book')} Теория</button>` : ''}
+        ${unlocked
+          ? `<button class="flagbtn ${flagged ? 'on' : ''}" data-flag="${u.id}" title="${flagged ? 'Снять отметку' : 'Отметить как сложную'}">${ic(flagged ? 'flagFill' : 'flag')}</button>
+             <button class="minibtn" data-th="${i}">${ic('book')} Теория</button>`
+          : `<button class="minibtn" data-open="${i}">${ic('unlock')} Открыть</button>`}
       </div>
     </div>`;
   }).join('');
@@ -206,6 +210,20 @@ function showCourse(subj) {
     };
   });
   app.querySelectorAll('[data-th]').forEach(el => el.onclick = () => showTheory(subj, Number(el.dataset.th), false));
+  app.querySelectorAll('[data-flag]').forEach(el => el.onclick = (e) => {
+    e.stopPropagation();
+    toggleFlag(subj, el.dataset.flag);
+    showCourse(subj);
+  });
+  app.querySelectorAll('[data-open]').forEach(el => el.onclick = () => {
+    const i = Number(el.dataset.open);
+    const u = c.units[i];
+    if (confirm(`Открыть тему «${u.title}» досрочно, не проходя предыдущие?`)) {
+      P.unlocked[subj + ':' + u.id] = true;
+      saveP();
+      showCourse(subj);
+    }
+  });
   app.querySelector('[data-act="exam"]').onclick = () => confirmExam(subj);
 }
 
@@ -217,10 +235,10 @@ function showTheory(subj, unitIdx, thenLesson) {
   if (thenLesson) { P.seenTheory[subj + ':' + u.id] = true; saveP(); }
   const cards = u.theory.map((t, i) => `<div class="theory-card" style="animation-delay:${i * 0.07}s"><h3>${t.title}</h3>${t.html}</div>`).join('');
   app.innerHTML = `
-    ${topbar(u.icon + ' ' + u.title, true, '')}
+    ${topbar(`<span class="title-mono subj-${subj}">${SUBJ_MONO[subj] || ''}</span>${u.title}`, true, '')}
     <div class="theory">${cards}</div>
     <div class="bottom-actions">
-      <button class="btn wide" data-act="go">${thenLesson ? 'НАЧАТЬ УРОК' : 'К ПРАКТИКЕ'}</button>
+      <button class="btn wide" data-act="go">${thenLesson ? 'Начать урок' : 'К практике'}</button>
     </div>`;
   bindTopbar(() => showCourse(subj));
   app.querySelectorAll('.theory-card').forEach(card => linkTerms(card, subj));
@@ -276,16 +294,18 @@ function buildSmartQueue() {
   const due = dueMistakes();
   shuffle(due.length ? due : P.mistakes).slice(0, 3).forEach(m => queue.push(Object.assign({ _mid: m.id, _subj: m.subj }, m.q)));
 
-  // слабые темы по счётчику ошибок
+  // приоритет: отмеченные «сложные» темы + слабые по счётчику ошибок
   const weak = Object.entries(P.weak).sort((a, b) => b[1] - a[1]).map(e => e[0]);
   const allGenUnits = [];
   Object.keys(COURSES).forEach(s => COURSES[s].units.forEach(u => {
     if (u.gens && u.gens.length) allGenUnits.push(s + ':' + u.id);
   }));
-  const source = weak.filter(k => allGenUnits.includes(k));
+  const flaggedKeys = Object.keys(P.flagged).filter(k => allGenUnits.includes(k));
+  // сначала отмеченные, затем слабые (без дублей)
+  const source = [...new Set([...flaggedKeys, ...weak.filter(k => allGenUnits.includes(k))])];
   let guard = 0;
   while (queue.length < SMART_LEN && guard++ < 80) {
-    const key = source.length && Math.random() < 0.7 ? pick(source.slice(0, 5)) : pick(allGenUnits);
+    const key = source.length && Math.random() < 0.75 ? pick(source.slice(0, 5)) : pick(allGenUnits);
     const [s, uid] = key.split(':');
     const u = COURSES[s].units.find(x => x.id === uid);
     const g = GENS[pick(u.gens)];
