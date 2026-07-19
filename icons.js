@@ -44,4 +44,3 @@ const ICON = {
   unlock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>'
 };
 function ic(name, cls) { return `<svg class="ic ${cls || ''}" viewBox="0 0 24 24" aria-hidden="true">${ICON[name] || ''}</svg>`; }
-const SUBJ_MONO = { math: 'ƒ', inf: '{}', rus: 'Аб', eng: 'Aa', morse: '·−' };

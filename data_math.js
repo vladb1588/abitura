@@ -15,6 +15,7 @@ function sgnTerm(n) { return (n < 0 ? '− ' : '+ ') + Math.abs(n); }
 const MATH_COURSE = {
   id: 'math',
   title: 'Математика',
+  mono: 'ƒ',
   icon: '📐',
   examTime: 180,
   passMark: 40,

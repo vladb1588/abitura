@@ -3,6 +3,7 @@
 const INF_COURSE = {
   id: 'inf',
   title: 'Информатика',
+  mono: '{}',
   icon: '💻',
   examTime: 180,
   passMark: 46,
