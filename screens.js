@@ -183,7 +183,7 @@ function showCourse(subj) {
       <div class="unit-node ${cls}" data-idx="${i}">${glyph}</div>
       <div class="unit-info">
         <h3>${flagged ? `<span class="flag-mark" title="Отмечено как сложное">${ic('flagFill')}</span>` : ''}${u.title}</h3>
-        <div class="unit-stars">${stars}</div>
+        <div class="unit-stars">${stars}${unlocked ? `<span class="tier-name">${lv >= MAX_LEVEL ? 'пройдена' : LEVEL_TIERS[lv].name.toLowerCase()}</span>` : ''}</div>
       </div>
       <div class="unit-actions">
         ${unlocked
@@ -252,39 +252,38 @@ function showTheory(subj, unitIdx, thenLesson) {
 /* ---------- Сборка очередей ---------- */
 function buildLessonQueue(subj, unitIdx) {
   const u = COURSES[subj].units[unitIdx];
+  /* уровень темы задаёт правила урока: состав по сложности, длину и порог */
+  const tier = LEVEL_TIERS[Math.min(unitLevel(subj, u.id), MAX_LEVEL - 1)];
+  const LEN = tier.len;
   const queue = [];
   let fresh = [];
   u.pool.forEach((q, qi) => {
     const key = subj + ':' + u.id + ':' + qi;
     if (!P.doneStatic[key]) fresh.push(Object.assign({ _skey: key }, q));
   });
-  /* адаптивная сложность: точность в теме высокая → сложные задания в приоритете,
-     низкая → сложные в конец очереди */
-  const rec = P.unitAcc[subj + ':' + u.id];
-  const acc = rec && rec.a >= 8 ? rec.c / rec.a : null;
-  const adaptive = acc !== null && acc >= 0.8;
+  if (tier.hard === 'exclude') fresh = fresh.filter(q => !q.hard);
   fresh = shuffle(fresh);
-  if (adaptive) fresh.sort((x, y) => (y.hard ? 1 : 0) - (x.hard ? 1 : 0));
-  else if (acc !== null && acc < 0.5) fresh.sort((x, y) => (x.hard ? 1 : 0) - (y.hard ? 1 : 0));
-  queue.push(...fresh.slice(0, LESSON_LEN));
-  /* генераторов теперь много — свежие задания в каждом уроке.
-     В урок всегда идёт минимум 3 сгенерированных, чтобы не заучивать пул наизусть */
+  if (tier.hard === 'prefer') fresh.sort((x, y) => (y.hard ? 1 : 0) - (x.hard ? 1 : 0));
+  queue.push(...fresh.slice(0, LEN));
+  /* минимум 3 сгенерированных задания в уроке — пул не заучивается наизусть */
   const genNames = (u.gens || []).filter(g => GENS[g]);
-  if (genNames.length && queue.length > LESSON_LEN - 3) queue.length = LESSON_LEN - 3;
+  if (genNames.length && queue.length > LEN - 3) queue.length = LEN - 3;
   let guard = 0;
-  while (queue.length < LESSON_LEN && genNames.length && guard++ < 60) {
+  while (queue.length < LEN && genNames.length && guard++ < 80) {
     const g = GENS[pick(genNames)];
     const q = g();
+    if (tier.hard === 'exclude' && q.hard) continue;
     if (!queue.some(x => x.text === q.text)) queue.push(q);
   }
   guard = 0;
-  while (queue.length < LESSON_LEN && u.pool.length && guard++ < 30) {
+  while (queue.length < LEN && u.pool.length && guard++ < 30) {
     const q = u.pool[rnd(0, u.pool.length - 1)];
+    if (tier.hard === 'exclude' && q.hard) continue;
     if (!queue.some(x => x.text === q.text)) queue.push(Object.assign({}, q));
     if (queue.length >= u.pool.length) break;
   }
   const out = shuffle(queue);
-  out._adaptive = adaptive;
+  out._tier = tier;
   return out;
 }
 
@@ -322,7 +321,6 @@ function startLesson(subj, unitIdx) {
   const queue = buildLessonQueue(subj, unitIdx);
   if (!queue.length) { toast('question', 'Пусто', 'В этой теме пока нет заданий.'); return; }
   S = { mode: 'lesson', subj, unitIdx, queue, pos: 0, total: queue.length, origTotal: queue.length, firstTry: 0, answered: 0, earned: 0 };
-  if (queue._adaptive) toast('flame', 'Адаптивная сложность', 'Точность в теме высокая — задания будут посложнее.');
   renderQuiz();
 }
 
@@ -409,7 +407,7 @@ function renderQuiz() {
     </div>
     <div class="quiz-body anim-in">
       <div class="qtype-row">
-        <div class="qtype">${q._retry ? 'Повтор' : (q.hard ? 'Повышенная сложность' : MODE_LABEL[S.mode] || 'Задание')}</div>
+        <div class="qtype">${q._retry ? 'Повтор' : (S.mode === 'lesson' && S.queue._tier ? 'Уровень: ' + S.queue._tier.name + (q.hard ? ' · сложное' : '') : (q.hard ? 'Повышенная сложность' : MODE_LABEL[S.mode] || 'Задание'))}</div>
         ${hasTheory ? `<button class="minibtn" id="quizTheory">${ic('book')} Теория</button>` : ''}
       </div>
       <div class="qtext">${q.text}</div>
@@ -607,7 +605,7 @@ function submitAnswer(q, val, skipped) {
 function finishQuiz() {
   KEYH = null;
   bumpStreak();
-  let bonus = 0, title, sub;
+  let bonus = 0, title, sub, tierHtml = '';
   const acc = Math.round(S.firstTry / S.origTotal * 100);
 
   touchDaily();
@@ -619,9 +617,24 @@ function finishQuiz() {
     if (acc === 100) P.stats.perfect++;
     const u = COURSES[S.subj].units[S.unitIdx];
     const lv = unitLevel(S.subj, u.id);
-    if (lv < MAX_LEVEL) setUnitLevel(S.subj, u.id, lv + 1);
-    title = 'Урок пройден!';
-    sub = `Тема «${u.title}»: уровень ${unitLevel(S.subj, u.id)} из ${MAX_LEVEL}`;
+    const tier = LEVEL_TIERS[Math.min(lv, MAX_LEVEL - 1)];
+    const passed = acc >= tier.pass;
+    if (passed && lv < MAX_LEVEL) setUnitLevel(S.subj, u.id, lv + 1);
+    const newLv = unitLevel(S.subj, u.id);
+    if (passed) {
+      title = newLv >= MAX_LEVEL ? 'Тема покорена!' : `Уровень «${tier.name}» пройден!`;
+      sub = newLv >= MAX_LEVEL
+        ? `«${u.title}» взята на вступительном уровне — корона твоя`
+        : `Дальше — «${LEVEL_TIERS[newLv].name}»: нужна точность ≥${LEVEL_TIERS[newLv].pass}%`;
+    } else {
+      title = 'Уровень пока не взят';
+      sub = `Для уровня «${tier.name}» нужно ≥${tier.pass}% точности, сейчас ${acc}%. XP не сгорает — попробуй ещё раз!`;
+    }
+    /* дорожка уровней темы */
+    tierHtml = `<div class="tier-track">${LEVEL_TIERS.map((t, i) => `
+      <div class="tier-step ${i < newLv ? 'on' : ''} ${passed && i === newLv - 1 ? 'just' : ''}">
+        <span class="td">${i < newLv ? ic('check') : ''}</span><span class="tn">${t.name}</span>
+      </div>`).join('')}</div>`;
   } else if (S.mode === 'mistakes') {
     title = 'Повторение завершено!';
     P.daily.reviews++;
@@ -651,6 +664,7 @@ function finishQuiz() {
       <h2>${title}</h2>
       <p class="sub">${sub}</p>
       <div><span class="xp-badge">${ic('bolt')} +${earned} XP</span><span class="acc-badge">${ic('target')} Точность ${acc}%</span></div>
+      ${tierHtml}
       <div style="margin-top:30px;">
         <button class="btn wide" id="okBtn">Продолжить</button>
       </div>

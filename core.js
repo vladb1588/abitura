@@ -11,7 +11,17 @@ function syncExperimental() {
 }
 const LESSON_LEN = 6;
 const SMART_LEN = 8;
-const MAX_LEVEL = 3;
+const MAX_LEVEL = 4;
+
+/* Уровни сложности темы. Урок уровня N собирается по правилу tier[N]:
+   hard: 'exclude' — без сложных, 'mix' — вперемешку, 'prefer' — сложные в приоритете.
+   Уровень засчитывается только при точности ≥ pass (XP начисляется всегда). */
+const LEVEL_TIERS = [
+  { name: 'Разминка',      pass: 50, hard: 'exclude', len: 6 },
+  { name: 'Практика',      pass: 60, hard: 'mix',     len: 6 },
+  { name: 'Сложные',       pass: 70, hard: 'prefer',  len: 7 },
+  { name: 'Вступительный', pass: 80, hard: 'prefer',  len: 8 }
+];
 
 /* Кастомные проверки ответов */
 const CHECKS = {
@@ -147,7 +157,7 @@ const ACH = [
   { id: 'streak7',  ico: 'flame',   title: 'Неделя силы',      desc: 'Стрик 7 дней подряд',              cond: () => P.streak >= 7 && displayStreak() >= 7 },
   { id: 'xp500',    ico: 'bolt',    title: 'Заряжен',          desc: 'Набери 500 XP',                    cond: () => P.xp >= 500 },
   { id: 'xp2000',   ico: 'bolt',    title: 'На орбите',        desc: 'Набери 2000 XP',                   cond: () => P.xp >= 2000 },
-  { id: 'crown',    ico: 'crown',   title: 'Корона',           desc: 'Прокачай тему до 3 звёзд',         cond: () => Object.values(P.levels).some(s => Object.values(s).some(l => l >= MAX_LEVEL)) },
+  { id: 'crown',    ico: 'crown',   title: 'Корона',           desc: 'Пройди тему на вступительном уровне', cond: () => Object.values(P.levels).some(s => Object.values(s).some(l => l >= MAX_LEVEL)) },
   { id: 'trio',     ico: 'spark',   title: 'Многостаночник',   desc: 'Начни все три предмета',           cond: () => ['math', 'inf', 'rus'].every(s => P.levels[s] && Object.values(P.levels[s]).some(l => l >= 1)) },
   { id: 'examPass', ico: 'cap',     title: 'Проходной балл',   desc: 'Сдай пробный экзамен',             cond: () => Object.keys(P.examBest).some(s => P.examBest[s] >= COURSES[s].passMark) },
   { id: 'exam3',    ico: 'medal',   title: 'Троеборец',        desc: 'Пройди порог на пробниках по всем трём предметам', cond: () => ['math', 'inf', 'rus'].every(s => P.examBest[s] >= COURSES[s].passMark) },

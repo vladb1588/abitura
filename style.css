@@ -636,6 +636,41 @@ h1,h2,h3{ font-weight:800; color:var(--head); }
 .plan.onboard{ border-color:var(--blue); }
 .plan.onboard .plan-item{ text-decoration:none; color:var(--text); }
 
+/* ---------- Уровни темы ---------- */
+.tier-name{
+  font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.4px;
+  color:var(--sub); background:var(--bg2); border-radius:999px; padding:2px 9px; margin-left:8px;
+}
+.tier-track{
+  display:flex; justify-content:center; gap:0; margin-top:26px; padding:0 10px;
+}
+.tier-step{
+  display:flex; flex-direction:column; align-items:center; gap:7px; position:relative;
+  width:88px;
+}
+.tier-step::before{
+  content:''; position:absolute; top:14px; left:-44px; width:88px; height:3px;
+  background:var(--gray); z-index:0;
+}
+.tier-step:first-child::before{ display:none; }
+.tier-step.on::before{ background:var(--green); }
+.tier-step .td{
+  width:28px; height:28px; border-radius:50%; background:var(--gray); z-index:1;
+  display:flex; align-items:center; justify-content:center; color:#fff;
+  border:3px solid var(--bg);
+}
+.tier-step .td .ic{ width:15px; height:15px; stroke-width:3; }
+.tier-step.on .td{ background:var(--green); }
+.tier-step .tn{ font-size:9.5px; font-weight:800; color:var(--gray-txt); text-transform:uppercase; letter-spacing:.2px; max-width:80px; text-align:center; }
+.tier-step.on .tn{ color:var(--green-sh); }
+.tier-step.just .td{ animation:tierPop .6s cubic-bezier(.2,1.6,.4,1) both .25s; }
+.tier-step.just .tn{ animation:popIn .4s ease both .45s; }
+@keyframes tierPop{
+  0%{ transform:scale(.3); box-shadow:0 0 0 0 color-mix(in srgb, var(--green) 55%, transparent); }
+  60%{ transform:scale(1.25); }
+  100%{ transform:scale(1); box-shadow:0 0 0 14px transparent; }
+}
+
 /* ---------- Азбука Морзе ---------- */
 .mcode{
   font-family:Consolas,Menlo,monospace; font-weight:700; letter-spacing:3px;
