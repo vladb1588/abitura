@@ -97,6 +97,11 @@ function showSettings() {
           <div><b>ИИ-задания</b><div class="hint" style="margin-top:2px;">Бесконечные задания от нейросети Claude. Нужен свой API-ключ. Пока в тестовом режиме — включи, если хочешь попробовать.</div></div>
           ${seg('showai', [{ v: 'on', t: 'Вкл' }, { v: 'off', t: 'Выкл' }], st.showAI ? 'on' : 'off')}
         </div>
+        <div style="height:12px"></div>
+        <div class="exp-row">
+          <div><b>Курс «Азбука Морзе»</b><div class="hint" style="margin-top:2px;">Научись принимать и передавать морзянку: 6 тем, озвучка кода, напевы. Появится на главной среди предметов.</div></div>
+          ${seg('showmorse', [{ v: 'on', t: 'Вкл' }, { v: 'off', t: 'Выкл' }], st.showMorse ? 'on' : 'off')}
+        </div>
       </div>
       ${st.showAI ? `
       <div class="set-row">
@@ -133,6 +138,7 @@ function showSettings() {
       if (name === 'goal') P.settings.goal = Number(v);
       if (name === 'model') P.settings.model = v;
       if (name === 'showai') { P.settings.showAI = v === 'on'; saveP(); showSettings(); return; }
+      if (name === 'showmorse') { P.settings.showMorse = v === 'on'; syncExperimental(); saveP(); showSettings(); return; }
       saveP();
       segEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
     });
@@ -160,6 +166,7 @@ function showSettings() {
         localStorage.setItem('altgtu-trainer', JSON.stringify(data));
         P = loadP();
         applyTheme();
+        syncExperimental();
         toast('upload', 'Прогресс восстановлен', `Загружено: ${P.xp} XP, стрик ${P.streak}.`);
         showHome();
       } catch (err) {
@@ -184,4 +191,5 @@ function showSettings() {
 
 /* ---------- Старт ---------- */
 applyTheme();
+syncExperimental();
 showHome();

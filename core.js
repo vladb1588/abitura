@@ -2,7 +2,13 @@
 /* ===== Абитура — движок ===== */
 
 const COURSES = { math: MATH_COURSE, inf: INF_COURSE, rus: RUS_COURSE };
-const GENS = Object.assign({}, MATH_GENS, INF_GENS, RUS_GENS);
+const GENS = Object.assign({}, MATH_GENS, INF_GENS, RUS_GENS, typeof MORSE_GENS !== 'undefined' ? MORSE_GENS : {});
+
+/* экспериментальные курсы включаются тумблером в настройках */
+function syncExperimental() {
+  if (P.settings.showMorse && typeof MORSE_COURSE !== 'undefined') COURSES.morse = MORSE_COURSE;
+  else delete COURSES.morse;
+}
 const LESSON_LEN = 6;
 const SMART_LEN = 8;
 const MAX_LEVEL = 3;
@@ -28,7 +34,7 @@ function defaultP() {
     daily: { day: '', xp: 0, lessons: 0, reviews: 0, blitz: 0 },
     ach: {},
     stats: { lessons: 0, exams: 0, answers: 0, correct: 0, perfect: 0, ai: 0, graduated: 0, blitzBest: 0, history: {} },
-    settings: { theme: 'auto', palette: 'classic', bg: 'classic', sound: true, goal: 50, examDate: '', showAI: false, apiKey: '', model: 'claude-opus-4-8' }
+    settings: { theme: 'auto', palette: 'classic', bg: 'classic', sound: true, goal: 50, examDate: '', showAI: false, showMorse: false, apiKey: '', model: 'claude-opus-4-8' }
   };
 }
 let P = loadP();
@@ -183,6 +189,11 @@ function sortedDigits(s) { return norm(s).replace(/[^0-9]/g, '').split('').sort(
 
 function isCorrect(q, val) {
   if (q.type === 'mc') return Number(val) === q.correct;
+  if (q.morse) {
+    /* морзянка: «·»/«.» и «−»/«-» равнозначны, пробелы не важны */
+    const mn = s => String(s).replace(/[·•]/g, '.').replace(/[−–—]/g, '-').replace(/[^.\-]/g, '');
+    return [].concat(q.correct).some(a => mn(a) === mn(val) && mn(val).length > 0);
+  }
   if (q.type === 'multi') {
     const sel = [].concat(val).map(Number).sort((a, b) => a - b);
     const need = q.correct.slice().sort((a, b) => a - b);
